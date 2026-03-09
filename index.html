@@ -169,7 +169,6 @@ canvas{display:block;width:100%;height:100%}
 <body>
 <div class="app">
 
-  <!-- ══ LEFT PANEL ══ -->
   <div class="left panel">
     <div class="lheader">
       <div class="app-title"><span class="live-dot"></span>Time Tracker</div>
@@ -198,7 +197,6 @@ canvas{display:block;width:100%;height:100%}
     </div>
   </div>
 
-  <!-- ══ RIGHT PANEL ══ -->
   <div class="right panel">
     <div class="rheader">
       <div class="view-tabs">
@@ -232,7 +230,6 @@ canvas{display:block;width:100%;height:100%}
   </div>
 </div>
 
-<!-- Delete confirm modal -->
 <div class="modal-bg" id="delModal">
   <div class="modal">
     <div class="modal-title">Delete Task?</div>
@@ -246,7 +243,6 @@ canvas{display:block;width:100%;height:100%}
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
@@ -402,12 +398,7 @@ function renderTaskList(){
     `;
     list.appendChild(row);
 
-    // accent bar color
-    row.style.setProperty('--lbar', assignColor(task.id));
-    if(activeTask===task.id){
-      const bar = row.querySelector('::before');
-    }
-    // inline style for ::before via CSS var hack — just set border-left
+    // inline style for ::before via CSS var hack
     row.style.boxShadow = `inset 3px 0 0 0 ${activeTask===task.id ? assignColor(task.id) : 'var(--border2)'}`;
   });
 
@@ -493,7 +484,6 @@ async function stopTask(){
     duration,
     date: todayStr()
   };
-  // fix startTime
   const st = new Date(endTime - duration*1000);
   entry.startTime = st.toISOString();
 
@@ -547,21 +537,18 @@ async function loadAll(){
   const today = todayStr();
 
   try {
-    // Load today's tasks — NO orderBy to avoid needing a composite index
     const tsnap = await db.collection('tasks').where('date','==',today).get();
     todayTasks = [];
     tsnap.forEach(doc=>{ const d=doc.data(); todayTasks.push({id:doc.id,...d}); assignColor(doc.id); });
-    todayTasks.sort((a,b)=>(a.order||0)-(b.order||0)); // sort client-side
+    todayTasks.sort((a,b)=>(a.order||0)-(b.order||0));
 
-    // Load logs for last 35 days — single where clause, no orderBy (no index needed)
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-35);
     const cutoffStr = cutoff.toISOString().split('T')[0];
     const lsnap = await db.collection('timelogs').where('date','>=',cutoffStr).get();
     allLogs = [];
     lsnap.forEach(doc=>{ allLogs.push({id:doc.id,...doc.data()}); });
-    allLogs.sort((a,b)=>a.date.localeCompare(b.date)); // sort client-side
+    allLogs.sort((a,b)=>a.date.localeCompare(b.date));
 
-    // Compute today totals
     todayTotals = {};
     allLogs.filter(l=>l.date===today).forEach(l=>{
       todayTotals[l.taskId] = (todayTotals[l.taskId]||0) + (l.duration||0);
@@ -572,9 +559,7 @@ async function loadAll(){
     await flushPending();
     refreshCharts();
   } catch(e){
-    // Show the real error so it can be diagnosed
     const msg = (e.message||'Unknown error');
-    console.error('Firebase loadAll error:', e.code, e.message);
     setSyncStatus('err', msg.length>44 ? msg.slice(0,42)+'…' : msg);
     toast('Error: ' + msg.slice(0,70), 'err');
     renderTaskList();
@@ -597,10 +582,7 @@ async function flushPending(){
 }
 
 // ═══════════════════════════════════════════
-// CHART ENGINE  — 3 distinct visual modes
-//   DAY   → 24h bubble timeline
-//   WEEK  → multi-line chart (one line per task)
-//   MONTH → multi-line chart (one line per task)
+// CHART ENGINE
 // ═══════════════════════════════════════════
 function setChartView(v, el){
   chartView=v; chartOffset=0;
@@ -623,31 +605,31 @@ function refreshCharts(){
   renderBreakdown();
 }
 
-// ── Period helpers ──────────────────────────
 function getPeriodRange(){
   const now = new Date();
   if(chartView==='day'){
     const d = new Date(now); d.setDate(d.getDate()+chartOffset);
-    const s = dateStr(d);
-    return {start:s, end:s, dates:[s]};
+    const s = dateStr(d), e = dateStr(d);
+    return {start:s, end:e, dates:[s]};
   }
   if(chartView==='week'){
     const d = new Date(now); d.setDate(d.getDate() + chartOffset*7);
     const dow = d.getDay(); const mon = new Date(d); mon.setDate(d.getDate()-(dow===0?6:dow-1));
     const dates=[];
     for(let i=0;i<7;i++){ const x=new Date(mon); x.setDate(mon.getDate()+i); dates.push(dateStr(x)); }
-    return {start:dates[0], end:dates[6], dates};
+    return {start:dates[0],end:dates[6],dates};
   }
+  // month
   const d = new Date(now.getFullYear(), now.getMonth()+chartOffset, 1);
   const year=d.getFullYear(), month=d.getMonth();
   const days = new Date(year,month+1,0).getDate();
   const dates=[];
   for(let i=1;i<=days;i++) dates.push(dateStr(new Date(year,month,i)));
-  return {start:dates[0], end:dates[dates.length-1], dates};
+  return {start:dates[0],end:dates[dates.length-1],dates};
 }
 
 function getPeriodLabel(){
-  const {start,end} = getPeriodRange();
+  const {start,end,dates} = getPeriodRange();
   if(chartView==='day'){
     const d = new Date(start+'T12:00:00');
     return d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -662,390 +644,242 @@ function getPeriodLabel(){
 
 function getAggregated(){
   const {dates} = getPeriodRange();
-  const byDate = {};
+  const byDate = {}; 
   const taskSet = new Set();
+
   dates.forEach(d=>{ byDate[d]={}; });
   allLogs.filter(l=>dates.includes(l.date)).forEach(l=>{
     const tn = l.taskName||l.taskId;
     taskSet.add(tn);
+    if(!byDate[l.date]) byDate[l.date]={};
     byDate[l.date][tn] = (byDate[l.date][tn]||0) + (l.duration||0);
   });
   if(activeTask && activeStart){
     const task = todayTasks.find(t=>t.id===activeTask);
     if(task && dates.includes(todayStr())){
-      taskSet.add(task.name);
-      byDate[todayStr()][task.name] = (byDate[todayStr()][task.name]||0) + sessionSecs;
+      const tn = task.name;
+      taskSet.add(tn);
+      byDate[todayStr()][tn] = (byDate[todayStr()][tn]||0) + sessionSecs;
     }
   }
-  return {byDate, dates, tasks:[...taskSet]};
+  return {byDate, dates, tasks: [...taskSet]};
 }
 
 function colorForName(name){
-  const task = todayTasks.find(t=>t.name===name);
+  const task = todayTasks.find(t=>t.name===name) || [...Object.entries(taskColors)].find(()=>false); 
   if(task) return assignColor(task.id);
   let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))&0xffff;
   return PALETTE[h % PALETTE.length];
 }
 
-// ── Canvas setup ────────────────────────────
-function setupCanvas(id){
-  const canvas = document.getElementById(id);
-  if(!canvas) return null;
-  const wrap = canvas.parentElement;
-  const dpr = window.devicePixelRatio||1;
-  const W = Math.max(100, wrap.clientWidth);
-  const H = Math.max(80,  wrap.clientHeight);
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  return {ctx, W, H};
-}
-
-// ── Main chart dispatcher ───────────────────
 function renderMainChart(){
   document.getElementById('periodLabel').textContent = getPeriodLabel();
-  if(chartView==='day')   renderDayBubble();
-  else                    renderLineChart();
-}
-
-// ══════════════════════════════════════════
-//  DAY VIEW — 24h bubble timeline
-//
-//  A large "day arc" ring shows 24 hours.
-//  Each task session = a coloured arc segment
-//  + a floating bubble with task name & duration.
-//  Untracked time = dark ring.
-// ══════════════════════════════════════════
-function renderDayBubble(){
-  const r = setupCanvas('mainChart');
-  if(!r) return;
-  const {ctx, W, H} = r;
-
-  const dateKey = getPeriodRange().dates[0];
-  const dayLogs = allLogs.filter(l=>l.date===dateKey);
-
-  // add live session
-  const liveLogs = [...dayLogs];
-  if(activeTask && activeStart && dateKey===todayStr()){
-    const task = todayTasks.find(t=>t.id===activeTask);
-    if(task) liveLogs.push({
-      taskId: activeTask, taskName: task.name,
-      startTime: activeStart.toISOString(),
-      endTime: new Date().toISOString(),
-      duration: sessionSecs, date: dateKey
-    });
-  }
-
-  // ── Layout constants ──
-  const cx = W*0.42, cy = H*0.5;
-  const outerR = Math.min(cx, cy) * 0.82;
-  const ringW   = outerR * 0.22;
-  const innerR  = outerR - ringW;
-  const TWO_PI  = Math.PI * 2;
-  const START   = -Math.PI/2; // 12 o'clock
-  const SECS_DAY = 86400;
-
-  // Draw dark background ring (full 24h)
-  ctx.beginPath();
-  ctx.arc(cx, cy, outerR - ringW/2, 0, TWO_PI);
-  ctx.strokeStyle = '#1c1c22';
-  ctx.lineWidth = ringW;
-  ctx.stroke();
-
-  // Draw subtle hour ticks
-  for(let h=0;h<24;h++){
-    const ang = START + (h/24)*TWO_PI;
-    const isMajor = h%6===0;
-    const r1 = outerR + (isMajor?4:2);
-    const r2 = outerR - ringW - (isMajor?4:2);
-    ctx.beginPath();
-    ctx.moveTo(cx+Math.cos(ang)*r1, cy+Math.sin(ang)*r1);
-    ctx.lineTo(cx+Math.cos(ang)*(outerR), cy+Math.sin(ang)*(outerR));
-    ctx.strokeStyle = isMajor ? '#3a3a48' : '#28282f';
-    ctx.lineWidth = isMajor ? 1.5 : 0.8;
-    ctx.stroke();
-  }
-
-  // Hour labels at 0,6,12,18
-  ctx.font = `10px 'JetBrains Mono'`;
-  ctx.fillStyle = '#4e4e62';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  [{h:0,lbl:'12am'},{h:6,lbl:'6am'},{h:12,lbl:'12pm'},{h:18,lbl:'6pm'}].forEach(({h,lbl})=>{
-    const ang = START + (h/24)*TWO_PI;
-    const lr = outerR + 14;
-    ctx.fillText(lbl, cx+Math.cos(ang)*lr, cy+Math.sin(ang)*lr);
-  });
-
-  // ── Draw task arcs ──
-  // Group sessions by task for bubble positioning
-  const taskArcs = {}; // taskName → [{startAng, endAng, secs}]
-
-  liveLogs.forEach(log=>{
-    if(!log.startTime || !log.duration) return;
-    const tn = log.taskName||log.taskId;
-    const color = colorForName(tn);
-
-    // convert startTime to seconds-since-midnight for this date
-    let st;
-    try{ st = new Date(log.startTime); } catch(e){ return; }
-    const dayStart = new Date(dateKey+'T00:00:00');
-    let secsSinceMidnight = (st - dayStart)/1000;
-    secsSinceMidnight = Math.max(0, Math.min(SECS_DAY-1, secsSinceMidnight));
-    const dur = Math.min(log.duration, SECS_DAY - secsSinceMidnight);
-    if(dur <= 0) return;
-
-    const angStart = START + (secsSinceMidnight/SECS_DAY)*TWO_PI;
-    const angEnd   = START + ((secsSinceMidnight+dur)/SECS_DAY)*TWO_PI;
-
-    // Draw arc segment
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR-ringW/2, angStart, angEnd);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = ringW;
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // glow pass
-    ctx.beginPath();
-    ctx.arc(cx, cy, outerR-ringW/2, angStart, angEnd);
-    ctx.strokeStyle = color.replace(')', ',0.25)').replace('rgb','rgba').replace('#',
-      // hex to rgba glow helper
-      (c=>{ const v=parseInt(c.slice(1),16); return `rgba(${(v>>16)&255},${(v>>8)&255},${v&255},`; })(color));
-    ctx.lineWidth = ringW + 6;
-    ctx.stroke();
-
-    if(!taskArcs[tn]) taskArcs[tn]=[];
-    taskArcs[tn].push({angStart, angEnd, dur, color});
-  });
-
-  // ── Centre stats ──
-  const totalSecs = liveLogs.reduce((a,l)=>a+(l.duration||0),0);
-  const totalH = Math.floor(totalSecs/3600);
-  const totalM = Math.floor((totalSecs%3600)/60);
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font=`bold 28px 'JetBrains Mono'`;
-  ctx.fillStyle = totalSecs>0?'#ededf5':'#33333c';
-  ctx.fillText(`${String(totalH).padStart(2,'0')}:${String(totalM).padStart(2,'0')}`, cx, cy-10);
-  ctx.font=`11px 'Syne'`;
-  ctx.fillStyle='#4e4e62';
-  ctx.fillText('tracked today', cx, cy+16);
-
-  const pct = Math.round((totalSecs/SECS_DAY)*100);
-  ctx.font=`10px 'JetBrains Mono'`;
-  ctx.fillStyle='#35356e';
-  ctx.fillText(`${pct}% of 24h`, cx, cy+32);
-
-  // ── Floating task bubbles (right side legend) ──
-  const taskList = Object.entries(taskArcs);
-  if(!taskList.length){
-    ctx.font=`12px 'Syne'`; ctx.fillStyle='#33333c'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('No sessions logged yet', cx, cy+60);
-    return;
-  }
-
-  // Aggregate per-task totals
-  const taskTotals = {};
-  liveLogs.forEach(l=>{ const tn=l.taskName||l.taskId; taskTotals[tn]=(taskTotals[tn]||0)+(l.duration||0); });
-  const sorted = Object.entries(taskTotals).sort((a,b)=>b[1]-a[1]);
-
-  const bubbleX = W*0.84;
-  const bubbleStartY = H*0.12;
-  const bubbleGap = Math.min(38, (H*0.8)/Math.max(sorted.length,1));
-
-  ctx.textAlign='left';
-  sorted.forEach(([name,secs],i)=>{
-    const y = bubbleStartY + i*bubbleGap;
-    const color = colorForName(name);
-    const r2 = bubbleGap*0.34;
-
-    // bubble circle
-    ctx.beginPath(); ctx.arc(bubbleX-r2-4, y+r2, r2, 0, Math.PI*2);
-    ctx.fillStyle = color+'33';
-    ctx.fill();
-    ctx.beginPath(); ctx.arc(bubbleX-r2-4, y+r2, r2, 0, Math.PI*2);
-    ctx.strokeStyle = color; ctx.lineWidth=1.5; ctx.stroke();
-
-    // task name
-    ctx.font=`bold 10px 'Syne'`; ctx.fillStyle='#ededf5'; ctx.textBaseline='top';
-    const label = name.length>14?name.slice(0,12)+'…':name;
-    ctx.fillText(label, bubbleX, y);
-    // duration
-    ctx.font=`9px 'JetBrains Mono'`; ctx.fillStyle=color; ctx.textBaseline='top';
-    ctx.fillText(hms(secs), bubbleX, y+13);
-  });
-}
-
-// ══════════════════════════════════════════
-//  WEEK / MONTH VIEW — multi-line chart
-//
-//  Y axis = hours tracked that day
-//  Each task = one coloured line with dots
-//  Smooth bezier curves between data points
-// ══════════════════════════════════════════
-function renderLineChart(){
-  const r = setupCanvas('mainChart');
-  if(!r) return;
-  const {ctx, W, H} = r;
+  const canvas = document.getElementById('mainChart');
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio||1;
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if(!W||!H) return;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
 
   const {byDate, dates, tasks} = getAggregated();
+  ctx.clearRect(0,0,W,H);
 
-  const PL=52, PR=20, PT=20, PB=38;
-  const CW=W-PL-PR, CH=H-PT-PB;
-  if(CW<=0||CH<=0) return;
-
-  // max seconds across all days
-  let maxSecs=0;
-  dates.forEach(d=>{
-    Object.values(byDate[d]||{}).forEach(v=>{ if(v>maxSecs) maxSecs=v; });
-  });
-  if(maxSecs<3600) maxSecs=3600;
-  maxSecs = Math.ceil(maxSecs/3600)*3600;
-
-  // ── Y axis grid ──
-  ctx.font=`10px 'JetBrains Mono'`;
-  ctx.textBaseline='middle'; ctx.textAlign='right';
-  const yTicks=4;
-  for(let i=0;i<=yTicks;i++){
-    const s=(maxSecs/yTicks)*i;
-    const y=PT+CH-(CH*i/yTicks);
-    ctx.fillStyle='#4e4e62';
-    const hrs=s/3600;
-    ctx.fillText(hrs%1===0?hrs+'h':(hrs.toFixed(1))+'h', PL-6, y);
-    ctx.strokeStyle=i===0?'#33333c':'#1c1c22';
-    ctx.lineWidth=i===0?1:.7;
-    ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(PL+CW,y); ctx.stroke();
+  if(chartView === 'day') {
+    renderDayBubbles(ctx, W, H, byDate, dates, tasks);
+  } else {
+    const PAD_L=52, PAD_R=30, PAD_T=40, PAD_B=40;
+    renderLineGraph(ctx, W-PAD_L-PAD_R, H-PAD_T-PAD_B, PAD_L, PAD_T, byDate, dates, tasks);
   }
+}
 
-  // ── X axis labels ──
-  const step = dates.length>15 ? Math.ceil(dates.length/12) : 1;
-  dates.forEach((date,di)=>{
-    if(di%step!==0 && di!==dates.length-1) return;
-    const x=PL+(di/(dates.length-1||1))*CW;
-    ctx.fillStyle='#4e4e62'; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.font=`10px 'JetBrains Mono'`;
-    const dObj=new Date(date+'T12:00:00');
-    const lbl = chartView==='week'
-      ? dObj.toLocaleDateString([],{weekday:'short'})
-      : dObj.getDate().toString();
-    ctx.fillText(lbl, x, PT+CH+6);
-  });
-
-  if(!tasks.length){
+// ── NEW LINE GRAPH ENGINGE (WEEK/MONTH) ──
+function renderLineGraph(ctx, chartW, chartH, PAD_L, PAD_T, byDate, dates, tasks) {
+  if(!dates.length || !tasks.length){
     ctx.fillStyle='#4e4e62'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font="12px 'Syne'";
-    ctx.fillText('No data for this period', PL+CW/2, PT+CH/2);
+    ctx.fillText('No data for this period', PAD_L+chartW/2, PAD_T+chartH/2);
     return;
   }
 
-  // ── Draw lines ──
-  tasks.forEach(taskName=>{
-    const color = colorForName(taskName);
-    const points = dates.map((date,di)=>{
-      const secs = (byDate[date]||{})[taskName]||0;
-      const x = PL+(di/(dates.length-1||1))*CW;
-      const y = PT+CH - (secs/maxSecs)*CH;
-      return {x, y, secs};
+  // Find max duration of any SINGLE task across days to scale Y axis appropriately
+  let maxSecs = 0;
+  tasks.forEach(tname => {
+    dates.forEach(d => {
+      let secs = (byDate[d]||{})[tname]||0;
+      if(secs > maxSecs) maxSecs = secs;
     });
+  });
+  if(maxSecs < 3600) maxSecs = 3600; 
+  maxSecs = Math.ceil(maxSecs/3600)*3600;
 
-    // Drop points with no data — but still draw them at baseline for continuity
-    // Only draw line through days with data
-    const hasData = points.some(p=>p.secs>0);
-    if(!hasData) return;
+  // Horizontal Legend at Top
+  let lx = PAD_L;
+  ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.font="10px 'Syne'";
+  tasks.slice(0,6).forEach((t,i) => {
+      const color = colorForName(t);
+      ctx.fillStyle = color;
+      ctx.fillRect(lx, PAD_T - 20, 8, 6);
+      ctx.fillStyle = '#8e8ea8';
+      let text = t.length>12 ? t.slice(0,10)+'…' : t;
+      ctx.fillText(text, lx + 12, PAD_T - 16);
+      lx += ctx.measureText(text).width + 24;
+  });
 
-    // ── Shadow / glow pass ──
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 4;
-    ctx.globalAlpha = 0.12;
-    ctx.filter = 'blur(4px)';
-    drawSmoothLine(ctx, points);
-    ctx.restore();
+  // Draw Grid and Y Axis
+  ctx.font = `10px 'JetBrains Mono'`;
+  ctx.textBaseline='middle'; ctx.textAlign='right';
+  const yTicks = 5;
+  for(let i=0;i<=yTicks;i++){
+    const secs = (maxSecs/yTicks)*i;
+    const y = PAD_T + chartH - (chartH*i/yTicks);
+    const hrs = secs/3600;
+    ctx.fillStyle='#4e4e62';
+    ctx.fillText(hrs%1===0?hrs+'h':(hrs).toFixed(1)+'h', PAD_L-6, y);
+    ctx.strokeStyle = i===0?'#33333c':'#1c1c22';
+    ctx.lineWidth = i===0?1:.8;
+    ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(PAD_L+chartW,y); ctx.stroke();
+  }
 
-    // ── Main line ──
-    ctx.save();
+  const xStep = chartW / (dates.length - 1 || 1);
+
+  // Draw Lines & Points
+  tasks.forEach(tname => {
+    const color = colorForName(tname);
+    
+    // Line Path
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.9;
-    ctx.lineJoin='round';
-    ctx.lineCap='round';
-    drawSmoothLine(ctx, points);
-    ctx.restore();
-
-    // ── Area fill under line ──
-    ctx.save();
-    const grad = ctx.createLinearGradient(0, PT, 0, PT+CH);
-    grad.addColorStop(0, color+'40');
-    grad.addColorStop(1, color+'00');
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.4;
+    ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(points[0].x, PT+CH);
-    points.forEach((p,i)=>{
-      if(i===0){ ctx.lineTo(p.x,p.y); return; }
-      const prev=points[i-1];
-      const cpx=(prev.x+p.x)/2;
-      ctx.bezierCurveTo(cpx,prev.y,cpx,p.y,p.x,p.y);
+    dates.forEach((date, di) => {
+      const secs = (byDate[date]||{})[tname]||0;
+      const x = PAD_L + di*xStep;
+      const y = PAD_T + chartH - (secs/maxSecs)*chartH;
+      if(di===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
-    ctx.lineTo(points[points.length-1].x, PT+CH);
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
+    ctx.stroke();
 
-    // ── Data point dots ──
-    points.forEach(p=>{
-      if(p.secs<=0) return;
-      // outer glow
-      ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
-      ctx.fillStyle=color+'44'; ctx.fill();
-      // dot
-      ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2);
-      ctx.fillStyle=color; ctx.fill();
-      // white centre
-      ctx.beginPath(); ctx.arc(p.x,p.y,1,0,Math.PI*2);
-      ctx.fillStyle='#fff'; ctx.fill();
+    // Data Points
+    dates.forEach((date, di) => {
+      const secs = (byDate[date]||{})[tname]||0;
+      if(secs === 0) return; // Skip 0 dots to keep graph clean
+      const x = PAD_L + di*xStep;
+      const y = PAD_T + chartH - (secs/maxSecs)*chartH;
+      ctx.fillStyle = '#09090b'; // Punch out background
+      ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth=2; ctx.stroke();
     });
   });
 
-  // ── Legend ──
-  drawLegend(ctx, tasks, W, PT);
+  // X Axis Labels
+  dates.forEach((date, di) => {
+    const x = PAD_L + di*xStep;
+    ctx.fillStyle='#4e4e62'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.font=`10px 'JetBrains Mono'`;
+    const d = new Date(date+'T12:00:00');
+    let label = chartView==='week' ? d.toLocaleDateString([],{weekday:'short'}) : d.getDate().toString();
+    
+    // Prevent overlap in Month view
+    if(dates.length > 15 && di % 3 !== 0 && di !== dates.length-1 && di !== 0) return;
+    
+    ctx.fillText(label, x, PAD_T+chartH+10);
+  });
 }
 
-// smooth bezier line helper
-function drawSmoothLine(ctx, points){
-  if(!points.length) return;
+// ── NEW RADIAL BUBBLE ENGINE (DAY) ──
+function renderDayBubbles(ctx, W, H, byDate, dates, tasks) {
+  const date = dates[0];
+  const dayData = byDate[date] || {};
+
+  let totalSecs = 0;
+  const activeTasks = [];
+  tasks.forEach(t => {
+      const secs = dayData[t]||0;
+      if(secs > 0) {
+        totalSecs += secs;
+        activeTasks.push({name: t, secs: secs});
+      }
+  });
+
+  const cx = W/2;
+  const cy = H/2;
+  const maxRadius = Math.min(W, H) / 2;
+  
+  // 1. Central 24h Bubble
+  const bigR = maxRadius * 0.35;
   ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for(let i=1;i<points.length;i++){
-    const prev=points[i-1], cur=points[i];
-    const cpx=(prev.x+cur.x)/2;
-    ctx.bezierCurveTo(cpx,prev.y,cpx,cur.y,cur.x,cur.y);
-  }
+  ctx.arc(cx, cy, bigR, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.02)';
+  ctx.fill();
+  ctx.strokeStyle = '#33333c'; 
+  ctx.lineWidth = 1;
   ctx.stroke();
-}
 
-function drawLegend(ctx, tasks, W, topY){
-  if(!tasks.length) return;
-  const show = tasks.slice(0,7);
-  let lx=W-12, ly=topY+4;
-  ctx.textAlign='right'; ctx.textBaseline='middle';
-  ctx.font=`10px 'Syne'`;
-  show.forEach((t,i)=>{
-    const color=colorForName(t);
-    ctx.fillStyle=color;
-    // small coloured circle
-    ctx.beginPath(); ctx.arc(lx-4, ly+i*14, 4, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#8e8ea8';
-    ctx.fillText(t.length>15?t.slice(0,13)+'…':t, lx-12, ly+i*14);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ededf5'; 
+  ctx.font = `800 18px 'Syne'`;
+  ctx.fillText(hms(totalSecs), cx, cy - 6);
+  ctx.fillStyle = '#8e8ea8'; 
+  ctx.font = `10px 'JetBrains Mono'`;
+  ctx.fillText('TRACKED TODAY', cx, cy + 14);
+
+  if(activeTasks.length === 0) {
+      ctx.fillText('No tasks active', cx, cy + 32);
+      return;
+  }
+
+  // 2. Orbiting small bubbles
+  const orbitR = bigR + maxRadius * 0.28;
+  activeTasks.sort((a,b) => b.secs - a.secs); // Render largest first for visual priority
+
+  activeTasks.forEach((task, i) => {
+      const angle = (i / activeTasks.length) * Math.PI * 2 - Math.PI/2; // Start from top (-90deg)
+      const bx = cx + orbitR * Math.cos(angle);
+      const by = cy + orbitR * Math.sin(angle);
+
+      // Scale bubble relative to duration
+      const r = Math.max(14, Math.sqrt(task.secs) * 0.4);
+
+      // Bubble Body
+      const color = colorForName(task.name);
+      ctx.beginPath();
+      ctx.arc(bx, by, r, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.85;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Smart Labels (Orient text outward from the center)
+      const tx = cx + (orbitR + r + 8) * Math.cos(angle);
+      const ty = cy + (orbitR + r + 8) * Math.sin(angle);
+
+      const alignX = Math.cos(angle);
+      const alignY = Math.sin(angle);
+      ctx.textAlign = alignX > 0.3 ? 'left' : (alignX < -0.3 ? 'right' : 'center');
+      ctx.textBaseline = alignY > 0.3 ? 'top' : (alignY < -0.3 ? 'bottom' : 'middle');
+
+      if (ctx.textBaseline === 'bottom') {
+          ctx.fillStyle = '#ededf5'; ctx.font = `600 11px 'Syne'`;
+          ctx.fillText(task.name, tx, ty - 14);
+          ctx.fillStyle = color; ctx.font = `10px 'JetBrains Mono'`;
+          ctx.fillText(hms(task.secs), tx, ty);
+      } else if (ctx.textBaseline === 'top') {
+          ctx.fillStyle = '#ededf5'; ctx.font = `600 11px 'Syne'`;
+          ctx.fillText(task.name, tx, ty);
+          ctx.fillStyle = color; ctx.font = `10px 'JetBrains Mono'`;
+          ctx.fillText(hms(task.secs), tx, ty + 14);
+      } else {
+          ctx.fillStyle = '#ededf5'; ctx.font = `600 11px 'Syne'`;
+          ctx.fillText(task.name, tx, ty - 7);
+          ctx.fillStyle = color; ctx.font = `10px 'JetBrains Mono'`;
+          ctx.fillText(hms(task.secs), tx, ty + 7);
+      }
   });
-}
-
-function roundRect(ctx,x,y,w,h,r){
-  if(h<=0){return;}
-  r=Math.min(r,h/2,w/2);
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.lineTo(x,y+r);
-  ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
 }
 
 // ── BREAKDOWN BARS ──
@@ -1065,7 +899,7 @@ function getBreakdownRange(){
 
 function renderBreakdown(){
   const dates = getBreakdownRange();
-  const totals = {};
+  const totals = {}; 
 
   allLogs.filter(l=>dates.includes(l.date)).forEach(l=>{
     const tn = l.taskName||l.taskId;
@@ -1099,7 +933,6 @@ function renderBreakdown(){
     container.appendChild(row);
   });
 }
-
 
 // ═══════════════════════════════════════════
 // RESIZE
@@ -1138,19 +971,13 @@ function scheduleMidnight(){
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-
-// Quick connectivity ping — write a heartbeat doc to verify rules allow writes
 async function pingFirebase(){
   try {
     await db.collection('_ping').doc('test').set({ts: new Date().toISOString()});
     setSyncStatus('ok','Firebase connected');
-    console.log('Firebase write test: OK');
   } catch(e){
-    console.error('Firebase write test FAILED:', e.code, e.message);
-    // Common: permission-denied means Firestore rules block writes
     if(e.code==='permission-denied'){
       setSyncStatus('err','Rules blocked — check Firestore rules');
-      toast('Firestore rules are blocking access. Set rules to allow read/write.','err');
     } else {
       setSyncStatus('err', e.message.slice(0,50));
     }
@@ -1160,7 +987,6 @@ async function pingFirebase(){
 pingFirebase();
 loadAll();
 scheduleMidnight();
-// Initial chart render after layout
 setTimeout(refreshCharts, 200);
 </script>
 </body>
