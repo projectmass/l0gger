@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Time Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface2: #18181c;
+    --surface3: #1f1f25;
+    --border: #2a2a32;
+    --border2: #35353f;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #55556a;
+    --accent: #7c6aff;
+    --accent2: #5548cc;
+    --accent-glow: rgba(124,106,255,0.15);
+    --green: #3ddc84;
+    --green-dim: rgba(61,220,132,0.12);
+    --red: #ff5a5a;
+    --red-dim: rgba(255,90,90,0.1);
+    --amber: #ffb347;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Subtle grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* Layout */
+  .app {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    grid-template-rows: 100vh;
+    height: 100vh;
+  }
+
+  /* LEFT PANEL */
+  .left-panel {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .app-title {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .app-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+    50% { opacity: 0.5; box-shadow: 0 0 4px var(--accent); }
+  }
+
+  .date-display {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .sync-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .sync-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text3);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .sync-dot.synced { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .sync-dot.syncing { background: var(--amber); animation: pulse 1s infinite; }
+  .sync-dot.offline { background: var(--red); }
+
+  /* Task List */
+  .tasks-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .tasks-scroll::-webkit-scrollbar { width: 4px; }
+  .tasks-scroll::-webkit-scrollbar-track { background: transparent; }
+  .tasks-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .task-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 6px;
+    cursor: default;
+    transition: all 0.2s ease;
+    background: var(--surface2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .task-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--border2);
+    border-radius: 8px 0 0 8px;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .task-row.active {
+    background: var(--surface3);
+    border-color: var(--border2);
+  }
+
+  .task-row.active::before {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+
+  .task-row:hover {
+    border-color: var(--border);
+  }
+
+  .task-name {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .task-row.active .task-name {
+    color: var(--text);
+  }
+
+  .task-total {
+    font-size: 11px;
+    color: var(--text3);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    min-width: 64px;
+    text-align: right;
+    transition: color 0.2s;
+  }
+
+  .task-row.active .task-total {
+    color: var(--green);
+  }
+
+  .task-timer {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--green);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    min-width: 64px;
+    text-align: right;
+    display: none;
+  }
+
+  .task-row.active .task-timer { display: block; }
+  .task-row.active .task-total { display: none; }
+
+  .btn-toggle {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s ease;
+    min-width: 48px;
+    white-space: nowrap;
+  }
+
+  .btn-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .task-row.active .btn-toggle {
+    border-color: var(--red);
+    color: var(--red);
+    background: var(--red-dim);
+  }
+
+  .task-row.active .btn-toggle:hover {
+    background: rgba(255,90,90,0.2);
+  }
+
+  /* Running indicator badge */
+  .running-badge {
+    display: none;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.8;
+    animation: blink 1.5s step-end infinite;
+  }
+  .task-row.active .running-badge { display: inline; }
+  @keyframes blink { 0%,100%{opacity:0.8} 50%{opacity:0.3} }
+
+  /* Summary */
+  .summary-panel {
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+
+  .summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .summary-header:hover { border-color: var(--border); }
+
+  .summary-title {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .summary-total-badge {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-body {
+    padding: 0 20px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 16px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-row:last-child, .summary-row:nth-last-child(2):nth-child(odd) {
+    border-bottom: none;
+  }
+
+  .summary-task-name {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--sans);
+    font-weight: 600;
+  }
+
+  .summary-time {
+    font-size: 11px;
+    color: var(--text3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-time.has-time {
+    color: var(--accent);
+  }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .right-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .right-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .calendar-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .calendar-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    filter: invert(0.88) hue-rotate(180deg) saturate(0.9) brightness(0.85);
+  }
+
+  .calendar-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text3);
+    font-family: var(--sans);
+  }
+
+  .calendar-placeholder .icon {
+    font-size: 48px;
+    opacity: 0.3;
+  }
+
+  .calendar-placeholder p {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    z-index: 1000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    max-width: 280px;
+  }
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      height: auto;
+      min-height: 100vh;
+    }
+    .left-panel {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      max-height: none;
+      overflow: visible;
+    }
+    .tasks-scroll {
+      overflow-y: visible;
+      max-height: none;
+    }
+    .right-panel {
+      height: 60vh;
+    }
+    .summary-body {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="app-title">
+        <span class="dot"></span>
+        Daily Time Tracker
+      </div>
+      <div class="date-display" id="dateDisplay"></div>
+      <div class="sync-status">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncLabel">Connecting…</span>
+      </div>
+    </div>
+
+    <div class="tasks-scroll" id="taskList"></div>
+
+    <div class="summary-panel">
+      <div class="summary-header" onclick="toggleSummary()">
+        <span class="summary-title">Today's Summary</span>
+        <span class="summary-total-badge" id="grandTotal">00:00:00</span>
+      </div>
+      <div class="summary-body" id="summaryBody"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="right-header">
+      <span class="right-title">Calendar</span>
+    </div>
+    <div class="calendar-wrap">
+      <div class="calendar-placeholder">
+        <div class="icon">📅</div>
+        <p>Google Calendar</p>
+        <p style="font-size:10px;opacity:0.3;font-family:var(--mono)">Replace iframe src to connect</p>
+      </div>
+      <!-- Replace src below with your Google Calendar iframe src -->
+      <!-- <iframe src="PASTE_YOUR_GOOGLE_CALENDAR_URL_HERE" frameborder="0" scrolling="no"></iframe> -->
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase Compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+// ── Firebase Init ──────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBwVPpgegjkcF8j3nYtpxKiFhDVkoHz8K4",
+  authDomain: "l0gger.firebaseapp.com",
+  projectId: "l0gger",
+  storageBucket: "l0gger.firebasestorage.app",
+  messagingSenderId: "834692824569",
+  appId: "1:834692824569:web:772b3421ce0c24b1ebd128"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: true })
+  .then(() => setSyncStatus('synced', 'Offline sync enabled'))
+  .catch(err => {
+    if (err.code === 'failed-precondition') setSyncStatus('synced', 'Multi-tab mode');
+    else if (err.code === 'unimplemented') setSyncStatus('offline', 'No offline support');
+  });
+
+// ── State ──────────────────────────────────────────────────────
+const TASKS = ['Deep Work','Email & Comms','Meetings','Planning','Admin','Learning','Exercise','Break','Other'];
+let activeTask = null;       // task name currently running
+let activeStart = null;      // Date when current session started
+let sessionElapsed = 0;      // seconds elapsed in current session (live)
+let tickInterval = null;
+let todayTotals = {};        // { taskName: totalSeconds }
+let pendingLogs = [];        // offline queue
+
+const todayStr = () => new Date().toISOString().split('T')[0];
+
+// ── UI Helpers ──────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2,'0'); }
+function secsToHMS(s) {
+  s = Math.floor(s);
+  return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+}
+
+function setSyncStatus(state, label) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + state;
+  lbl.textContent = label;
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+// ── Date Display ───────────────────────────────────────────────
+function updateDateDisplay() {
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('dateDisplay').textContent =
+    now.toLocaleDateString(undefined, opts).toUpperCase();
+}
+updateDateDisplay();
+
+// ── Build Task List ────────────────────────────────────────────
+function buildTaskList() {
+  const list = document.getElementById('taskList');
+  list.innerHTML = '';
+  TASKS.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.id = 'row-' + name.replace(/\s+/g,'_');
+    row.innerHTML = `
+      <div>
+        <div class="task-name">${name}</div>
+        <span class="running-badge">● live</span>
+      </div>
+      <div class="task-timer" id="timer-${name.replace(/\s+/g,'_')}">00:00:00</div>
+      <div class="task-total" id="total-${name.replace(/\s+/g,'_')}">00:00:00</div>
+      <button class="btn-toggle" onclick="toggleTask('${name}')">Start</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+// ── Tick ───────────────────────────────────────────────────────
+function startTick() {
+  clearInterval(tickInterval);
+  tickInterval = setInterval(() => {
+    if (!activeTask || !activeStart) return;
+    sessionElapsed = (Date.now() - activeStart.getTime()) / 1000;
+    const key = activeTask.replace(/\s+/g,'_');
+    const el = document.getElementById('timer-' + key);
+    if (el) el.textContent = secsToHMS(sessionElapsed);
+    updateSummary();
+  }, 1000);
+}
+
+// ── Toggle Task ────────────────────────────────────────────────
+async function toggleTask(name) {
+  if (activeTask === name) {
+    await stopTask();
+  } else {
+    if (activeTask) await stopTask();
+    startTask(name);
+  }
+}
+
+function startTask(name) {
+  activeTask = name;
+  activeStart = new Date();
+  sessionElapsed = 0;
+
+  const key = name.replace(/\s+/g,'_');
+  const row = document.getElementById('row-' + key);
+  const btn = row.querySelector('.btn-toggle');
+  row.classList.add('active');
+  btn.textContent = 'Stop';
+
+  startTick();
+  showToast(`Started: ${name}`, 'success');
+}
+
+async function stopTask() {
+  if (!activeTask || !activeStart) return;
+
+  const endTime = new Date();
+  const duration = Math.floor((endTime - activeStart) / 1000);
+  const task = activeTask;
+  const startTime = activeStart;
+
+  // Clear active state UI
+  const key = task.replace(/\s+/g,'_');
+  const row = document.getElementById('row-' + key);
+  const btn = row.querySelector('.btn-toggle');
+  const timerEl = document.getElementById('timer-' + key);
+  row.classList.remove('active');
+  btn.textContent = 'Start';
+  timerEl.textContent = '00:00:00';
+
+  // Update local totals
+  todayTotals[task] = (todayTotals[task] || 0) + duration;
+  updateTotalDisplay(task);
+  updateSummary();
+
+  activeTask = null;
+  activeStart = null;
+  sessionElapsed = 0;
+  clearInterval(tickInterval);
+
+  // Save to Firestore
+  const entry = {
+    task,
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    duration,
+    date: todayStr()
+  };
+
+  setSyncStatus('syncing', 'Saving…');
+  try {
+    await db.collection('timelogs').add(entry);
+    setSyncStatus('synced', 'Synced');
+    showToast(`Logged ${secsToHMS(duration)} for ${task}`, 'success');
+  } catch(e) {
+    pendingLogs.push(entry);
+    localStorage.setItem('pendingLogs', JSON.stringify(pendingLogs));
+    setSyncStatus('offline', 'Saved offline');
+    showToast('Saved locally (offline)', 'error');
+  }
+}
+
+// ── Update Displays ─────────────────────────────────────────────
+function updateTotalDisplay(task) {
+  const key = task.replace(/\s+/g,'_');
+  const el = document.getElementById('total-' + key);
+  if (el) el.textContent = secsToHMS(todayTotals[task] || 0);
+}
+
+function updateSummary() {
+  const body = document.getElementById('summaryBody');
+  const grandEl = document.getElementById('grandTotal');
+  body.innerHTML = '';
+
+  let grand = 0;
+  TASKS.forEach(name => {
+    let secs = todayTotals[name] || 0;
+    if (activeTask === name) secs += sessionElapsed;
+    grand += secs;
+
+    const r = document.createElement('div');
+    r.className = 'summary-row';
+    r.innerHTML = `
+      <span class="summary-task-name">${name}</span>
+      <span class="summary-time ${secs>0?'has-time':''}">${secsToHMS(secs)}</span>
+    `;
+    body.appendChild(r);
+  });
+
+  grandEl.textContent = secsToHMS(grand);
+}
+
+// ── Load Today's Logs from Firestore ───────────────────────────
+async function loadTodayLogs() {
+  setSyncStatus('syncing', 'Loading…');
+  try {
+    const snap = await db.collection('timelogs')
+      .where('date', '==', todayStr())
+      .get();
+
+    todayTotals = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      todayTotals[d.task] = (todayTotals[d.task] || 0) + (d.duration || 0);
+    });
+
+    TASKS.forEach(t => updateTotalDisplay(t));
+    updateSummary();
+    setSyncStatus('synced', `Loaded ${snap.size} entries`);
+
+    // Flush any pending offline logs
+    await flushPending();
+  } catch(e) {
+    setSyncStatus('offline', 'Offline mode');
+    showToast('Running in offline mode', '');
+    // Load from localStorage fallback
+    loadFromLocalStorage();
+  }
+}
+
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem('pendingLogs');
+    if (!raw) return;
+    const logs = JSON.parse(raw);
+    const today = todayStr();
+    todayTotals = {};
+    logs.filter(l => l.date === today).forEach(l => {
+      todayTotals[l.task] = (todayTotals[l.task] || 0) + l.duration;
+    });
+    TASKS.forEach(t => updateTotalDisplay(t));
+    updateSummary();
+  } catch(e) {}
+}
+
+async function flushPending() {
+  const raw = localStorage.getItem('pendingLogs');
+  if (!raw) return;
+  try {
+    const logs = JSON.parse(raw);
+    if (!logs.length) return;
+    const batch = db.batch();
+    logs.forEach(entry => {
+      const ref = db.collection('timelogs').doc();
+      batch.set(ref, entry);
+    });
+    await batch.commit();
+    localStorage.removeItem('pendingLogs');
+    pendingLogs = [];
+    showToast(`Synced ${logs.length} offline entries`, 'success');
+  } catch(e) {}
+}
+
+function toggleSummary() {
+  const body = document.getElementById('summaryBody');
+  body.style.display = body.style.display === 'none' ? '' : 'none';
+}
+
+// ── Handle tab close / visibility change ───────────────────────
+window.addEventListener('beforeunload', async (e) => {
+  if (activeTask && activeStart) {
+    // Best-effort sync
+    const endTime = new Date();
+    const duration = Math.floor((endTime - activeStart) / 1000);
+    const entry = {
+      task: activeTask,
+      startTime: activeStart.toISOString(),
+      endTime: endTime.toISOString(),
+      duration,
+      date: todayStr()
+    };
+    // Use beacon for reliable send on close
+    const payload = JSON.stringify({ entry });
+    try {
+      await db.collection('timelogs').add(entry);
+    } catch(err) {
+      const pending = JSON.parse(localStorage.getItem('pendingLogs') || '[]');
+      pending.push(entry);
+      localStorage.setItem('pendingLogs', JSON.stringify(pending));
+    }
+  }
+});
+
+// Refresh totals at midnight
+function scheduleMidnightRefresh() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  setTimeout(() => {
+    todayTotals = {};
+    TASKS.forEach(t => updateTotalDisplay(t));
+    updateSummary();
+    updateDateDisplay();
+    scheduleMidnightRefresh();
+    loadTodayLogs();
+  }, midnight - now);
+}
+
+// ── Init ───────────────────────────────────────────────────────
+buildTaskList();
+updateSummary();
+loadTodayLogs();
+scheduleMidnightRefresh();
+</script>
+</body>
+</html>
