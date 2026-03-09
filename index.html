@@ -264,8 +264,8 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 db.enablePersistence({synchronizeTabs:true})
-  .then(()=>setSyncStatus('ok','Offline ready'))
-  .catch(e=>setSyncStatus('ok', e.code==='failed-precondition'?'Multi-tab':'Connected'));
+  .then(()=>console.log('Firestore offline persistence enabled'))
+  .catch(e=>{ if(e.code==='failed-precondition') console.warn('Multi-tab: persistence disabled'); else console.warn('Persistence unavailable:', e); });
 
 // ═══════════════════════════════════════════
 // STATE
@@ -547,32 +547,36 @@ async function loadAll(){
   const today = todayStr();
 
   try {
-    // load today's tasks
-    const tsnap = await db.collection('tasks').where('date','==',today).orderBy('order').get();
+    // Load today's tasks — NO orderBy to avoid needing a composite index
+    const tsnap = await db.collection('tasks').where('date','==',today).get();
     todayTasks = [];
     tsnap.forEach(doc=>{ const d=doc.data(); todayTasks.push({id:doc.id,...d}); assignColor(doc.id); });
+    todayTasks.sort((a,b)=>(a.order||0)-(b.order||0)); // sort client-side
 
-    // load all logs (last 35 days for charts)
+    // Load logs for last 35 days — single where clause, no orderBy (no index needed)
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-35);
-    const lsnap = await db.collection('timelogs')
-      .where('date','>=',cutoff.toISOString().split('T')[0])
-      .orderBy('date').get();
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    const lsnap = await db.collection('timelogs').where('date','>=',cutoffStr).get();
     allLogs = [];
     lsnap.forEach(doc=>{ allLogs.push({id:doc.id,...doc.data()}); });
+    allLogs.sort((a,b)=>a.date.localeCompare(b.date)); // sort client-side
 
-    // compute today totals
+    // Compute today totals
     todayTotals = {};
     allLogs.filter(l=>l.date===today).forEach(l=>{
       todayTotals[l.taskId] = (todayTotals[l.taskId]||0) + (l.duration||0);
     });
 
     renderTaskList();
-    setSyncStatus('ok',`Loaded`);
+    setSyncStatus('ok','Synced ✓');
     await flushPending();
     refreshCharts();
   } catch(e){
-    setSyncStatus('err','Offline mode');
-    toast('Running offline','');
+    // Show the real error so it can be diagnosed
+    const msg = (e.message||'Unknown error');
+    console.error('Firebase loadAll error:', e.code, e.message);
+    setSyncStatus('err', msg.length>44 ? msg.slice(0,42)+'…' : msg);
+    toast('Error: ' + msg.slice(0,70), 'err');
     renderTaskList();
     refreshCharts();
   }
@@ -886,6 +890,26 @@ function scheduleMidnight(){
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
+
+// Quick connectivity ping — write a heartbeat doc to verify rules allow writes
+async function pingFirebase(){
+  try {
+    await db.collection('_ping').doc('test').set({ts: new Date().toISOString()});
+    setSyncStatus('ok','Firebase connected');
+    console.log('Firebase write test: OK');
+  } catch(e){
+    console.error('Firebase write test FAILED:', e.code, e.message);
+    // Common: permission-denied means Firestore rules block writes
+    if(e.code==='permission-denied'){
+      setSyncStatus('err','Rules blocked — check Firestore rules');
+      toast('Firestore rules are blocking access. Set rules to allow read/write.','err');
+    } else {
+      setSyncStatus('err', e.message.slice(0,50));
+    }
+  }
+}
+
+pingFirebase();
 loadAll();
 scheduleMidnight();
 // Initial chart render after layout
