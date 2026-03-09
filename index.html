@@ -6,307 +6,254 @@
 <title>Daily Time Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#08080a;--s1:#0e0e11;--s2:#141418;--s3:#1a1a1f;--s4:#202026;--s5:#272730;
-  --b1:#252530;--b2:#2e2e3a;--b3:#3a3a48;
-  --t1:#eeeef8;--t2:#9898b8;--t3:#55556e;--t4:#32323f;
-  --acc:#7c5cfc;--acc2:#9b7dff;--acc-g:rgba(124,92,252,.15);
-  --grn:#2dd87a;--grn-g:rgba(45,216,122,.12);
-  --red:#f04f4f;--red-g:rgba(240,79,79,.1);
-  --amb:#f0a832;
-  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+:root {
+  --bg: #09090b;
+  --s1: #0f0f12;
+  --s2: #16161a;
+  --s3: #1c1c22;
+  --s4: #232329;
+  --border: #28282f;
+  --border2: #33333c;
+  --text: #ededf5;
+  --text2: #8e8ea8;
+  --text3: #4e4e62;
+  --accent: #6f5cff;
+  --accent-l: #8b7bff;
+  --accent-glow: rgba(111,92,255,0.18);
+  --green: #35d47e;
+  --green-dim: rgba(53,212,126,0.13);
+  --red: #f05252;
+  --red-dim: rgba(240,82,82,0.1);
+  --amber: #f0a030;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
-body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 0%,rgba(124,92,252,.05) 0%,transparent 55%),radial-gradient(ellipse 50% 35% at 85% 100%,rgba(45,216,122,.03) 0%,transparent 55%);pointer-events:none;z-index:0}
-::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
-button{cursor:pointer;font-family:var(--mono)}
-input,textarea{font-family:var(--mono)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
 
-.app{display:grid;grid-template-columns:390px 1fr;height:100vh;position:relative;z-index:1}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 0%,rgba(111,92,255,0.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(53,212,126,0.03) 0%,transparent 60%);pointer-events:none;z-index:0}
 
-/* LEFT */
-.lpanel{background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
-.lhead{padding:15px 18px 11px;border-bottom:1px solid var(--b1);flex-shrink:0}
-.title-row{display:flex;align-items:center;justify-content:space-between}
-.app-title{font-family:var(--sans);font-size:15px;font-weight:800;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
-.pulse{width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 7px var(--acc);animation:pa 2s ease-in-out infinite;flex-shrink:0}
-@keyframes pa{0%,100%{box-shadow:0 0 7px var(--acc)}50%{box-shadow:0 0 2px var(--acc);opacity:.5}}
-.date-str{font-size:10px;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;margin-top:2px}
-.sync-row{display:flex;align-items:center;gap:5px;margin-top:3px}
-.sdot{width:5px;height:5px;border-radius:50%;background:var(--t4);flex-shrink:0;transition:all .3s}
-.sdot.ok{background:var(--grn);box-shadow:0 0 5px var(--grn)}.sdot.busy{background:var(--amb);animation:pa 1s infinite}.sdot.err{background:var(--red)}
-.slabel{font-size:10px;color:var(--t3);letter-spacing:.04em}
-.focus-btn{background:none;border:1px solid var(--b2);color:var(--t3);font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:4px;transition:all .15s;text-transform:uppercase}
-.focus-btn:hover,.focus-btn.on{border-color:var(--amb);color:var(--amb);background:rgba(240,168,50,.1)}
+/* ── APP SHELL ── */
+.app{display:grid;grid-template-columns:400px 1fr;height:100vh;position:relative;z-index:1}
 
-.add-bar{display:flex;gap:6px;padding:9px 14px;border-bottom:1px solid var(--b1);flex-shrink:0}
-.add-input{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-size:12px;padding:6px 10px;outline:none;transition:border-color .2s}
-.add-input:focus{border-color:var(--acc)}.add-input::placeholder{color:var(--t4)}
-.btn-add{background:var(--acc);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:700;padding:6px 13px;letter-spacing:.04em;transition:all .15s;white-space:nowrap}
-.btn-add:hover{background:var(--acc2);box-shadow:0 0 14px var(--acc-g)}
+/* ── LEFT PANEL ── */
+.left{background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 
-.task-scroll{flex:1;overflow-y:auto;padding:8px 10px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
+.lheader{padding:16px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.app-title{font-family:var(--sans);font-size:16px;font-weight:800;letter-spacing:-0.03em;display:flex;align-items:center;gap:8px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:glow 2s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 8px var(--accent)}50%{box-shadow:0 0 3px var(--accent);opacity:.6}}
+.date-line{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.sync-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);margin-top:4px}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--text3);transition:all .3s}
+.sdot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.sdot.busy{background:var(--amber);animation:glow 1s infinite}
+.sdot.err{background:var(--red)}
 
-.task-card{padding:10px 12px 10px 15px;border-radius:8px;border:1px solid transparent;margin-bottom:5px;background:var(--s2);transition:border-color .2s,background .2s;position:relative}
-.task-card:hover{border-color:var(--b2)}
-.task-card.active{background:var(--s3);border-color:var(--b2)}
-.lbar{position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--b2);transition:all .2s}
-.task-card.active .lbar{background:var(--grn);box-shadow:0 0 8px var(--grn)}
-.tc-main{display:flex;align-items:center;gap:6px}
-.tc-name{font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:-.01em;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tc-badge{font-size:8px;color:var(--grn);font-weight:700;letter-spacing:.1em;display:none;animation:blink 1.5s step-end infinite;flex-shrink:0}
-.task-card.active .tc-badge{display:inline}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.tc-sub{display:flex;align-items:center;gap:8px;margin-top:3px}
-.tc-total{font-size:10px;color:var(--t3);font-variant-numeric:tabular-nums}
-.task-card.active .tc-total{color:var(--grn);font-weight:600}
-.tc-live{font-size:11px;font-weight:700;color:var(--grn);font-variant-numeric:tabular-nums;display:none}
-.task-card.active .tc-live{display:block}
-.task-card.active .tc-total{display:none}
-.tc-sess{font-size:9px;color:var(--t4);letter-spacing:.03em}
-.tc-btns{display:flex;align-items:center;gap:4px;margin-top:5px}
-.btn-start{background:none;border:1px solid var(--b2);color:var(--t2);font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
-.btn-start:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-g)}
-.task-card.active .btn-start{border-color:var(--red);color:var(--red);background:var(--red-g)}
-.task-card.active .btn-start:hover{background:rgba(240,79,79,.2)}
-.btn-note-sm{background:none;border:1px solid var(--b1);color:var(--t4);font-size:10px;padding:3px 6px;border-radius:4px;transition:all .15s}
-.btn-note-sm:hover{border-color:var(--b3);color:var(--t2)}
-.btn-del-sm{background:none;border:none;color:var(--t4);font-size:13px;padding:2px 4px;border-radius:3px;transition:color .15s;margin-left:auto}
-.btn-del-sm:hover{color:var(--red)}
+/* add task bar */
+.add-bar{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.add-input{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 11px;outline:none;transition:border-color .2s}
+.add-input:focus{border-color:var(--accent)}
+.add-input::placeholder{color:var(--text3)}
+.btn-add{background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;padding:7px 14px;cursor:pointer;letter-spacing:.04em;transition:all .15s;white-space:nowrap}
+.btn-add:hover{background:var(--accent-l);box-shadow:0 0 12px var(--accent-glow)}
 
-.empty-state{text-align:center;padding:28px 20px;color:var(--t3)}
-.empty-state .ei{font-size:24px;opacity:.35;margin-bottom:8px}
-.empty-state p{font-size:11px;line-height:1.8}
+/* task list */
+.task-scroll{flex:1;overflow-y:auto;padding:10px 12px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.task-scroll::-webkit-scrollbar{width:3px}
+.task-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-.summary-strip{border-top:1px solid var(--b1);flex-shrink:0}
-.sum-head{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;cursor:pointer;user-select:none}
-.sum-label{font-family:var(--sans);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);transition:color .2s}
-.sum-head:hover .sum-label{color:var(--t2)}
-.sum-grand{font-size:11px;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums}
-.sum-body{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;padding:0 16px 8px;max-height:130px;overflow-y:auto;scrollbar-width:thin}
-.sum-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid var(--b1)}
-.sum-name{font-size:9px;color:var(--t2);font-family:var(--sans);font-weight:600;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sum-time{font-size:9px;color:var(--t4);font-variant-numeric:tabular-nums}
-.sum-time.has{color:var(--acc2)}
+.task-row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:7px;border:1px solid transparent;margin-bottom:5px;background:var(--s2);transition:all .2s;position:relative;overflow:hidden}
+.task-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border2);border-radius:7px 0 0 7px;transition:all .2s}
+.task-row:hover{border-color:var(--border2)}
+.task-row.active{background:var(--s3);border-color:var(--border2)}
+.task-row.active::before{background:var(--green);box-shadow:0 0 8px var(--green)}
 
-/* RIGHT */
-.rpanel{background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
-.rtabs{display:flex;gap:2px;padding:12px 18px 0;border-bottom:1px solid var(--b1);flex-shrink:0}
-.rtab{background:none;border:none;color:var(--t3);font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:6px 12px;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px}
-.rtab:hover{color:var(--t2)}.rtab.active{color:var(--t1);border-bottom-color:var(--acc)}
-.rpage{flex:1;overflow:hidden;display:none;flex-direction:column;min-height:0}
-.rpage.active{display:flex}
+.task-name-wrap{flex:1;min-width:0}
+.task-name{font-family:var(--sans);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.live-badge{font-size:9px;color:var(--green);font-weight:700;letter-spacing:.08em;display:none;animation:blink 1.4s step-end infinite}
+.task-row.active .live-badge{display:inline}
+@keyframes blink{0%,100%{opacity:.9}50%{opacity:.3}}
 
-/* Charts */
-.chart-controls{display:flex;align-items:center;gap:6px;padding:10px 18px;border-bottom:1px solid var(--b1);flex-shrink:0;flex-wrap:wrap}
-.period-tabs{display:flex;gap:3px}
-.ptab{background:none;border:1px solid var(--b1);color:var(--t3);font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;border-radius:4px;transition:all .15s}
-.ptab:hover{border-color:var(--b2);color:var(--t2)}.ptab.active{background:var(--s2);border-color:var(--b2);color:var(--t1)}
-.nav-btn{background:none;border:1px solid var(--b2);color:var(--t2);font-size:12px;padding:3px 9px;border-radius:4px;transition:all .15s}
-.nav-btn:hover{border-color:var(--acc);color:var(--acc)}
-.period-lbl{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--t1);flex:1;text-align:center;letter-spacing:-.01em}
-.today-btn{background:var(--s2);border:1px solid var(--b2);color:var(--t2);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:4px;transition:all .15s}
-.today-btn:hover{border-color:var(--acc2);color:var(--acc2)}
-.chart-body{flex:1;display:flex;flex-direction:column;padding:12px 18px 8px;min-height:0}
-.chart-wrap{flex:1;position:relative;min-height:80px}
+.task-time{font-size:11px;font-variant-numeric:tabular-nums;color:var(--text3);min-width:60px;text-align:right;transition:color .2s}
+.task-row.active .task-time{color:var(--green);font-weight:600}
+.task-live{font-size:11px;font-variant-numeric:tabular-nums;color:var(--green);font-weight:600;min-width:60px;text-align:right;display:none}
+.task-row.active .task-live{display:block}
+.task-row.active .task-time{display:none}
+
+.btn-toggle{background:none;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.btn-toggle:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.task-row.active .btn-toggle{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+.task-row.active .btn-toggle:hover{background:rgba(240,82,82,.2)}
+
+.btn-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;border-radius:3px;transition:color .15s;flex-shrink:0}
+.btn-del:hover{color:var(--red)}
+
+.empty-tasks{text-align:center;padding:32px 20px;color:var(--text3);font-size:12px}
+.empty-tasks .icon{font-size:28px;margin-bottom:8px;opacity:.4}
+
+/* summary */
+.summary{border-top:1px solid var(--border);flex-shrink:0;background:var(--s1)}
+.summary-head{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;cursor:pointer;user-select:none}
+.summary-head:hover .summary-title{color:var(--text2)}
+.summary-title{font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);transition:color .2s}
+.grand-total{font-size:12px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;padding:0 18px 10px;max-height:140px;overflow-y:auto}
+.sum-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)}
+.sum-name{font-size:10px;color:var(--text2);font-family:var(--sans);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.sum-time{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums}
+.sum-time.has{color:var(--accent)}
+
+/* ── RIGHT PANEL ── */
+.right{background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+
+.rheader{padding:16px 22px 0;flex-shrink:0}
+.view-tabs{display:flex;gap:4px;margin-bottom:0}
+.vtab{background:none;border:1px solid transparent;color:var(--text3);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:5px;cursor:pointer;transition:all .15s}
+.vtab:hover{color:var(--text2);border-color:var(--border2)}
+.vtab.active{background:var(--s2);border-color:var(--border2);color:var(--text)}
+
+.rcontrols{display:flex;align-items:center;gap:8px;padding:10px 22px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.nav-btn{background:none;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;transition:all .15s}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.period-label{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--text);flex:1;text-align:center;letter-spacing:-.01em}
+.today-btn{background:var(--s2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;padding:4px 10px;border-radius:5px;cursor:pointer;transition:all .15s}
+.today-btn:hover{border-color:var(--accent-l);color:var(--accent-l)}
+
+.chart-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:16px 22px}
+.chart-wrap{flex:1;position:relative;min-height:0}
+
 canvas{display:block;width:100%;height:100%}
 
-.breakdown{flex-shrink:0;border-top:1px solid var(--b1);padding:10px 18px 12px}
-.bd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.bd-title{font-family:var(--sans);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
-.bd-tabs{display:flex;gap:2px}
-.bdtab{background:none;border:1px solid transparent;color:var(--t4);font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;transition:all .15s}
-.bdtab:hover{color:var(--t2)}.bdtab.active{background:var(--s2);border-color:var(--b2);color:var(--t1)}
-.bd-bars{display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
-.bd-row{display:grid;grid-template-columns:100px 1fr 58px;align-items:center;gap:7px}
-.bd-name{font-family:var(--sans);font-size:9px;font-weight:700;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bd-track{background:var(--s3);border-radius:2px;height:5px;overflow:hidden}
-.bd-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.bd-time{font-size:9px;color:var(--t3);font-variant-numeric:tabular-nums;text-align:right}
-.bd-time.top{color:var(--acc2);font-weight:700}
+/* breakdown section */
+.breakdown{flex-shrink:0;border-top:1px solid var(--border);padding:14px 22px}
+.breakdown-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.breakdown-title{font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
+.breakdown-tabs{display:flex;gap:3px}
+.btab{background:none;border:1px solid transparent;color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .15s}
+.btab:hover{color:var(--text2)}
+.btab.active{background:var(--s2);border-color:var(--border2);color:var(--text)}
+.breakdown-bars{display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.bbar-row{display:grid;grid-template-columns:110px 1fr 60px;align-items:center;gap:8px}
+.bbar-name{font-family:var(--sans);font-size:10px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bbar-track{background:var(--s3);border-radius:3px;height:6px;overflow:hidden}
+.bbar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bbar-time{font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;text-align:right}
+.bbar-time.top{color:var(--accent)}
 
-/* History */
-.history-controls{display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid var(--b1);flex-shrink:0}
-.hdate{background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-size:11px;padding:5px 10px;outline:none;transition:border-color .2s;color-scheme:dark}
-.hdate:focus{border-color:var(--acc)}
-.hsearch{flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-size:11px;padding:5px 10px;outline:none;transition:border-color .2s}
-.hsearch:focus{border-color:var(--acc)}.hsearch::placeholder{color:var(--t4)}
-.hscroll{flex:1;overflow-y:auto;padding:12px 18px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent}
-.hday{margin-bottom:20px}
-.hday-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--b1)}
-.hday-date{font-family:var(--sans);font-size:12px;font-weight:800;color:var(--t1);letter-spacing:-.01em}
-.hday-total{font-size:10px;color:var(--acc);font-variant-numeric:tabular-nums;font-weight:700}
-.htask{margin-bottom:8px}
-.htask-hdr{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-.htask-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.htask-name{font-family:var(--sans);font-size:10px;font-weight:700;color:var(--t2)}
-.htask-tot{font-size:9px;color:var(--t3);font-variant-numeric:tabular-nums;margin-left:auto}
-.hsess{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:8px;padding:4px 0 4px 13px;border-left:1px solid var(--b2);margin-left:3px;margin-bottom:2px}
-.hsess-range{font-size:10px;color:var(--t3);font-variant-numeric:tabular-nums;white-space:nowrap}
-.hsess-dur{font-size:10px;color:var(--t2);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
-.hsess-note{font-size:10px;color:var(--t3);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn-edit-note{background:none;border:1px solid var(--b1);color:var(--t4);font-size:9px;padding:2px 5px;border-radius:3px;transition:all .15s;flex-shrink:0}
-.btn-edit-note:hover{border-color:var(--b3);color:var(--t2)}
-.hempty{text-align:center;padding:40px 20px;color:var(--t3);font-size:11px}
-
-/* Note modal */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:600;display:none;align-items:center;justify-content:center}
-.overlay.open{display:flex}
-.modal-box{background:var(--s2);border:1px solid var(--b2);border-radius:12px;padding:22px;width:360px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
-.modal-title{font-family:var(--sans);font-size:14px;font-weight:800;margin-bottom:4px}
-.modal-sub{font-size:10px;color:var(--t3);margin-bottom:14px;line-height:1.6}
-.modal-textarea{width:100%;background:var(--s3);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-size:12px;padding:9px 11px;resize:vertical;min-height:80px;outline:none;transition:border-color .2s;line-height:1.6}
-.modal-textarea:focus{border-color:var(--acc)}
-.modal-msg{font-size:11px;color:var(--t2);margin-bottom:18px;line-height:1.7}
-.modal-btns{display:flex;gap:7px;justify-content:flex-end;margin-top:12px}
-.mbtn{background:none;border:1px solid var(--b2);color:var(--t2);font-size:11px;font-weight:600;padding:6px 14px;border-radius:6px;transition:all .15s}
-.mbtn:hover{border-color:var(--t2);color:var(--t1)}
-.mbtn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
-.mbtn.primary:hover{background:var(--acc2)}
-.mbtn.danger{border-color:var(--red);color:var(--red)}
-.mbtn.danger:hover{background:var(--red-g)}
-
-/* Focus overlay */
-.focus-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:800;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-.focus-overlay.on{display:flex}
-.fo-name{font-family:var(--sans);font-size:26px;font-weight:800;color:var(--t1);letter-spacing:-.03em;text-align:center;padding:0 20px}
-.fo-timer{font-size:62px;font-weight:300;color:var(--grn);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.fo-stop{background:none;border:1px solid var(--red);color:var(--red);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:8px 22px;border-radius:6px;transition:all .15s;margin-top:8px}
-.fo-stop:hover{background:var(--red-g)}
-.fo-exit{font-size:10px;color:var(--t3);background:none;border:none;text-decoration:underline;cursor:pointer}
-.fo-exit:hover{color:var(--t2)}
-
-.toast{position:fixed;bottom:18px;right:18px;background:var(--s4);border:1px solid var(--b2);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--t2);z-index:9999;transform:translateY(56px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:290px;line-height:1.5}
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s3);border:1px solid var(--border2);border-radius:7px;padding:9px 14px;font-size:11px;color:var(--text2);z-index:9998;transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:260px}
 .toast.show{transform:translateY(0);opacity:1}
-.toast.ok{border-color:var(--grn);color:var(--grn)}.toast.err{border-color:var(--red);color:var(--red)}.toast.warn{border-color:var(--amb);color:var(--amb)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
 
-@media(max-width:800px){
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--s2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-title{font-family:var(--sans);font-size:15px;font-weight:800;margin-bottom:16px}
+.modal-msg{font-size:12px;color:var(--text2);margin-bottom:20px;line-height:1.7}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.mbtn{background:none;border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:600;padding:7px 16px;border-radius:6px;cursor:pointer;transition:all .15s}
+.mbtn:hover{border-color:var(--text2);color:var(--text)}
+.mbtn.danger{border-color:var(--red);color:var(--red)}
+.mbtn.danger:hover{background:var(--red-dim)}
+
+@media(max-width:780px){
   .app{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;min-height:100vh;overflow:auto}
-  html,body{overflow:auto}.rpanel{min-height:60vh}
+  html,body{overflow:auto}
+  .right{min-height:500px}
 }
 </style>
 </head>
 <body>
 <div class="app">
 
-<!-- LEFT PANEL -->
-<div class="lpanel">
-  <div class="lhead">
-    <div class="title-row">
-      <div class="app-title"><span class="pulse"></span>Time Tracker</div>
-      <button class="focus-btn" id="focusBtn" onclick="toggleFocus()">Focus</button>
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="left panel">
+    <div class="lheader">
+      <div class="app-title"><span class="live-dot"></span>Time Tracker</div>
+      <div class="date-line" id="dateDisplay"></div>
+      <div class="sync-row"><span class="sdot" id="sdot"></span><span id="slabel">Connecting…</span></div>
     </div>
-    <div class="date-str" id="dateDisp"></div>
-    <div class="sync-row"><span class="sdot" id="sdot"></span><span class="slabel" id="slabel">Connecting…</span></div>
-  </div>
-  <div class="add-bar">
-    <input class="add-input" id="addInput" placeholder="Add a task for today…" maxlength="50" autocomplete="off">
-    <button class="btn-add" onclick="addTask()">+ Add</button>
-  </div>
-  <div class="task-scroll" id="taskList">
-    <div class="empty-state" id="emptyState">
-      <div class="ei">⏱</div>
-      <p>Add your tasks for today above.<br>Each task is scoped to today's date<br>and synced to Firebase.</p>
-    </div>
-  </div>
-  <div class="summary-strip">
-    <div class="sum-head" onclick="toggleSummary()">
-      <span class="sum-label">Today's Summary</span>
-      <span class="sum-grand" id="grandTotal">00:00:00</span>
-    </div>
-    <div class="sum-body" id="sumBody"></div>
-  </div>
-</div>
 
-<!-- RIGHT PANEL -->
-<div class="rpanel">
-  <div class="rtabs">
-    <button class="rtab active" onclick="switchTab('charts',this)">Charts</button>
-    <button class="rtab" onclick="switchTab('history',this)">Session Log</button>
-  </div>
+    <div class="add-bar">
+      <input class="add-input" id="addInput" placeholder="New task name…" maxlength="40" autocomplete="off">
+      <button class="btn-add" onclick="addTask()">+ Add</button>
+    </div>
 
-  <!-- CHARTS -->
-  <div class="rpage active" id="page-charts">
-    <div class="chart-controls">
-      <div class="period-tabs">
-        <button class="ptab active" onclick="setPeriod('day',this)">Day</button>
-        <button class="ptab" onclick="setPeriod('week',this)">Week</button>
-        <button class="ptab" onclick="setPeriod('month',this)">Month</button>
+    <div class="task-scroll" id="taskList">
+      <div class="empty-tasks" id="emptyMsg">
+        <div class="icon">⏱</div>
+        Add tasks above to start tracking
       </div>
-      <button class="nav-btn" onclick="navPeriod(-1)">&#8592;</button>
-      <span class="period-lbl" id="periodLbl"></span>
-      <button class="nav-btn" onclick="navPeriod(1)">&#8594;</button>
-      <button class="today-btn" onclick="navToday()">Today</button>
     </div>
-    <div class="chart-body">
-      <div class="chart-wrap"><canvas id="mainCanvas"></canvas></div>
+
+    <div class="summary">
+      <div class="summary-head" onclick="toggleSummary()">
+        <span class="summary-title">Today's Summary</span>
+        <span class="grand-total" id="grandTotal">00:00:00</span>
+      </div>
+      <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+  </div>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="right panel">
+    <div class="rheader">
+      <div class="view-tabs">
+        <button class="vtab active" onclick="setChartView('day',this)">Day</button>
+        <button class="vtab" onclick="setChartView('week',this)">Week</button>
+        <button class="vtab" onclick="setChartView('month',this)">Month</button>
+      </div>
+    </div>
+    <div class="rcontrols">
+      <button class="nav-btn" onclick="navPeriod(-1)">&#8592;</button>
+      <span class="period-label" id="periodLabel"></span>
+      <button class="nav-btn" onclick="navPeriod(1)">&#8594;</button>
+      <button class="today-btn" onclick="goToday()">Today</button>
+    </div>
+    <div class="chart-area">
+      <div class="chart-wrap">
+        <canvas id="mainChart"></canvas>
+      </div>
     </div>
     <div class="breakdown">
-      <div class="bd-head">
-        <span class="bd-title">Time per Task</span>
-        <div class="bd-tabs">
-          <button class="bdtab active" onclick="setBd('day',this)">Day</button>
-          <button class="bdtab" onclick="setBd('week',this)">Week</button>
-          <button class="bdtab" onclick="setBd('month',this)">Month</button>
+      <div class="breakdown-head">
+        <span class="breakdown-title">Time per Task</span>
+        <div class="breakdown-tabs">
+          <button class="btab active" onclick="setBreakView('day',this)">Day</button>
+          <button class="btab" onclick="setBreakView('week',this)">Week</button>
+          <button class="btab" onclick="setBreakView('month',this)">Month</button>
         </div>
       </div>
-      <div class="bd-bars" id="bdBars"></div>
+      <div class="breakdown-bars" id="breakdownBars"></div>
     </div>
   </div>
-
-  <!-- SESSION LOG -->
-  <div class="rpage" id="page-history">
-    <div class="history-controls">
-      <input type="date" class="hdate" id="hDateFilter" onchange="renderHistory()">
-      <input type="text" class="hsearch" id="hSearch" placeholder="Search task or note…" oninput="renderHistory()">
-    </div>
-    <div class="hscroll" id="hScroll"></div>
-  </div>
-</div>
 </div>
 
-<!-- Note Modal -->
-<div class="overlay" id="noteOverlay">
-  <div class="modal-box">
-    <div class="modal-title" id="noteTitle">Session Note</div>
-    <div class="modal-sub" id="noteSub"></div>
-    <textarea class="modal-textarea" id="noteTA" placeholder="What did you work on? Any blockers or wins?"></textarea>
+<!-- Delete confirm modal -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <div class="modal-title">Delete Task?</div>
+    <div class="modal-msg" id="delModalMsg"></div>
     <div class="modal-btns">
-      <button class="mbtn" onclick="closeNote()">Cancel</button>
-      <button class="mbtn primary" onclick="saveNote()">Save Note</button>
+      <button class="mbtn" onclick="closeModal()">Cancel</button>
+      <button class="mbtn danger" onclick="confirmDelete()">Delete</button>
     </div>
   </div>
-</div>
-
-<!-- Confirm Modal -->
-<div class="overlay" id="confirmOverlay">
-  <div class="modal-box" style="width:320px">
-    <div class="modal-title" id="confirmTitle">Confirm</div>
-    <div class="modal-msg" id="confirmMsg"></div>
-    <div class="modal-btns">
-      <button class="mbtn" onclick="closeConfirm()">Cancel</button>
-      <button class="mbtn danger" onclick="doConfirm()">Delete</button>
-    </div>
-  </div>
-</div>
-
-<!-- Focus Overlay -->
-<div class="focus-overlay" id="focusOL">
-  <div class="fo-name" id="foName">No task running</div>
-  <div class="fo-timer" id="foTimer">00:00:00</div>
-  <button class="fo-stop" onclick="stopTask()">■ Stop Task</button>
-  <button class="fo-exit" onclick="exitFocus()">Exit focus mode</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-'use strict';
 
-// ── FIREBASE ──────────────────────────────────
+<script>
+// ═══════════════════════════════════════════
+// FIREBASE
+// ═══════════════════════════════════════════
 firebase.initializeApp({
   apiKey:"AIzaSyBwVPpgegjkcF8j3nYtpxKiFhDVkoHz8K4",
   authDomain:"l0gger.firebaseapp.com",
@@ -316,692 +263,905 @@ firebase.initializeApp({
   appId:"1:834692824569:web:772b3421ce0c24b1ebd128"
 });
 const db = firebase.firestore();
-db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+db.enablePersistence({synchronizeTabs:true})
+  .then(()=>console.log('Firestore offline persistence enabled'))
+  .catch(e=>{ if(e.code==='failed-precondition') console.warn('Multi-tab: persistence disabled'); else console.warn('Persistence unavailable:', e); });
 
-// ── CONSTANTS ─────────────────────────────────
-const PAL = ['#7c5cfc','#2dd87a','#f04f4f','#f0a832','#2dc4d8','#e85d9e','#a8d44a','#74b8fc','#e899f5','#ffa44a','#5eefc4','#ff8080'];
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let todayTasks   = [];        // [{id, name, order}]  — today's task list
+let todayTotals  = {};        // {taskId: seconds}
+let activeTask   = null;      // id
+let activeStart  = null;      // Date
+let sessionSecs  = 0;
+let tickInterval = null;
+let pendingLogs  = [];
+let allLogs      = [];        // all loaded logs for charts
+let deleteTarget = null;
 
-// ── STATE ─────────────────────────────────────
-let todayTasks  = [];   // [{id,name,date,order}]
-let todayTotals = {};   // {taskId: secs}
-let allLogs     = [];   // fetched logs (last 60d)
-let colorMap    = {};   // {taskId: hex}
-let nameColorCache = {}; // {taskName: hex} for history lookups
+// chart state
+let chartView    = 'day';     // day | week | month
+let chartOffset  = 0;         // how many periods back from today
+let breakView    = 'day';
 
-let activeId    = null;
-let activeStart = null;
-let sessSecs    = 0;
-let ticker      = null;
+// colours per task (generated)
+const PALETTE = ['#6f5cff','#35d47e','#f05252','#f0a030','#3bc9db','#f06595','#a9e34b','#74c0fc','#e599f7','#ffa94d','#63e6be','#ff8787'];
+let taskColors = {};
 
-let cPeriod     = 'day';
-let cOffset     = 0;
-let bdPeriod    = 'day';
-let focusOn     = false;
-let sumOpen     = true;
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+const pad = n => String(n).padStart(2,'0');
+const hms = s => { s=Math.max(0,Math.floor(s)); return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`; };
+const todayStr = () => new Date().toISOString().split('T')[0];
+const dateStr  = d => d.toISOString().split('T')[0];
 
-let confirmCb   = null;
-let noteLog     = null;
-
-// ── HELPERS ───────────────────────────────────
-const pad  = n => String(Math.floor(Math.abs(n))).padStart(2,'0');
-const hms  = s => { s = Math.max(0, s|0); return `${pad(s/3600)}:${pad((s%3600)/60)}:${pad(s%60)}`; };
-const tod  = () => new Date().toISOString().split('T')[0];
-const dstr = d => { try{ return d.toISOString().split('T')[0]; }catch(e){ return tod(); } };
-const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const ftm  = iso => { try{ return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }catch(){ return '--'; } };
-
-function setSync(state,msg){
-  document.getElementById('sdot').className='sdot '+state;
-  document.getElementById('slabel').textContent=msg;
+function setSyncStatus(state, label){
+  document.getElementById('sdot').className = 'sdot ' + state;
+  document.getElementById('slabel').textContent = label;
 }
-function toast(msg,type='',dur=2800){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className='toast show '+type;
-  clearTimeout(el._t); el._t=setTimeout(()=>{ el.className='toast'; },dur);
+
+function toast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  clearTimeout(t._t); t._t = setTimeout(()=>{ t.className='toast'; }, 2600);
 }
-function getColor(taskId){
-  if(!colorMap[taskId]){
-    colorMap[taskId]=PAL[Object.keys(colorMap).length % PAL.length];
+
+function assignColor(taskId){
+  if(!taskColors[taskId]){
+    const idx = Object.keys(taskColors).length % PALETTE.length;
+    taskColors[taskId] = PALETTE[idx];
   }
-  return colorMap[taskId];
-}
-function colorByName(name){
-  // try today's tasks first
-  const t=todayTasks.find(x=>x.name===name);
-  if(t) return getColor(t.id);
-  // try cache
-  if(nameColorCache[name]) return nameColorCache[name];
-  // deterministic hash
-  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))&0xffff;
-  const c=PAL[h%PAL.length]; nameColorCache[name]=c; return c;
-}
-function queueOffline(key,entry){
-  const arr=JSON.parse(localStorage.getItem(key)||'[]');
-  arr.push(entry); localStorage.setItem(key,JSON.stringify(arr));
+  return taskColors[taskId];
 }
 
-// ── DATE DISPLAY ──────────────────────────────
-function updateDate(){
-  document.getElementById('dateDisp').textContent=
-    new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'}).toUpperCase();
+// ═══════════════════════════════════════════
+// DATE DISPLAY
+// ═══════════════════════════════════════════
+function updateDateDisplay(){
+  const d = new Date();
+  document.getElementById('dateDisplay').textContent =
+    d.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'}).toUpperCase();
 }
-updateDate();
+updateDateDisplay();
 
-// ── TAB SWITCHING ─────────────────────────────
-function switchTab(name,el){
-  document.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.rpage').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('page-'+name).classList.add('active');
-  if(name==='history') renderHistory();
-  if(name==='charts') setTimeout(renderChart,40);
-}
-
-// ── TASK MANAGEMENT ───────────────────────────
+// ═══════════════════════════════════════════
+// TASK MANAGEMENT
+// ═══════════════════════════════════════════
 async function addTask(){
-  const inp=document.getElementById('addInput');
-  const name=(inp.value||'').trim();
-  if(!name){ toast('Enter a task name','warn'); return; }
+  const inp = document.getElementById('addInput');
+  const name = inp.value.trim();
+  if(!name) return;
+  inp.value = '';
+
+  // check duplicate today
   if(todayTasks.find(t=>t.name.toLowerCase()===name.toLowerCase())){
-    toast('Task already exists for today','warn'); return; }
-  inp.value='';
-
-  const data={name,date:tod(),order:todayTasks.length,createdAt:new Date().toISOString()};
-  setSync('busy','Saving…');
-  try{
-    const ref=await db.collection('tasks').add(data);
-    data.id=ref.id;
-    setSync('ok','Saved ✓');
-    toast('Added: '+name,'ok');
-  }catch(e){
-    data.id='loc_'+Date.now();
-    queueOffline('pendingTasks',data);
-    setSync('err','Saved offline');
-    toast('Saved offline — will sync when online','warn');
+    toast('Task already exists today','err'); return;
   }
-  getColor(data.id);
-  nameColorCache[data.name]=getColor(data.id);
-  todayTasks.push(data);
-  renderTasks();
+
+  const task = {
+    name,
+    date: todayStr(),
+    order: todayTasks.length,
+    createdAt: new Date().toISOString()
+  };
+
+  setSyncStatus('busy','Saving…');
+  try {
+    const ref = await db.collection('tasks').add(task);
+    task.id = ref.id;
+    setSyncStatus('ok','Synced');
+  } catch(e){
+    task.id = 'local_' + Date.now();
+    const pending = JSON.parse(localStorage.getItem('pendingTasks')||'[]');
+    pending.push(task);
+    localStorage.setItem('pendingTasks', JSON.stringify(pending));
+    setSyncStatus('err','Saved offline');
+  }
+
+  assignColor(task.id);
+  todayTasks.push(task);
+  renderTaskList();
+  toast(`Task added: ${name}`,'ok');
 }
-document.getElementById('addInput').addEventListener('keydown',e=>{ if(e.key==='Enter') addTask(); });
 
-function renderTasks(){
-  const list=document.getElementById('taskList');
-  const empty=document.getElementById('emptyState');
-  list.querySelectorAll('.task-card').forEach(el=>el.remove());
-  if(!todayTasks.length){ empty.style.display=''; updateSummary(); return; }
-  empty.style.display='none';
+document.getElementById('addInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') addTask();
+});
 
-  todayTasks.forEach(task=>{
-    const isAct=activeId===task.id;
-    const total=(todayTotals[task.id]||0)+(isAct?sessSecs:0);
-    const sessCnt=allLogs.filter(l=>l.date===tod()&&l.taskId===task.id).length;
-    const col=getColor(task.id);
+function renderTaskList(){
+  const list = document.getElementById('taskList');
+  const empty = document.getElementById('emptyMsg');
 
-    const card=document.createElement('div');
-    card.className='task-card'+(isAct?' active':'');
-    card.id='card_'+task.id;
-    card.innerHTML=`
-      <span class="lbar" style="background:${isAct?col:'var(--b2)'};${isAct?'box-shadow:0 0 8px '+col:''}"></span>
-      <div class="tc-main">
-        <span class="tc-name">${esc(task.name)}</span>
-        <span class="tc-badge">● LIVE</span>
+  if(!todayTasks.length){
+    empty.style.display = '';
+    list.querySelectorAll('.task-row').forEach(r=>r.remove());
+    updateSummary(); return;
+  }
+  empty.style.display = 'none';
+
+  // rebuild
+  list.querySelectorAll('.task-row').forEach(r=>r.remove());
+  todayTasks.forEach(task => {
+    const row = document.createElement('div');
+    row.className = 'task-row' + (activeTask===task.id?' active':'');
+    row.id = 'row_' + task.id;
+    row.style.setProperty('--task-color', assignColor(task.id));
+    if(activeTask===task.id) row.style.setProperty('--before-bg', assignColor(task.id));
+
+    row.innerHTML = `
+      <div class="task-name-wrap">
+        <div class="task-name">${escHtml(task.name)}</div>
+        <span class="live-badge">● live</span>
       </div>
-      <div class="tc-sub">
-        <span class="tc-live" id="live_${task.id}">00:00:00</span>
-        <span class="tc-total" id="tot_${task.id}">${hms(total)}</span>
-        ${sessCnt>0?`<span class="tc-sess">${sessCnt} session${sessCnt>1?'s':''}</span>`:''}
-      </div>
-      <div class="tc-btns">
-        <button class="btn-start" onclick="toggleTask('${task.id}')">${isAct?'■ Stop':'▶ Start'}</button>
-        <button class="btn-note-sm" onclick="openNoteForTask('${task.id}')" title="Note for last session">📝 Note</button>
-        <button class="btn-del-sm" onclick="askDel('${task.id}')" title="Remove task">×</button>
-      </div>`;
-    list.appendChild(card);
+      <div class="task-live" id="live_${task.id}">00:00:00</div>
+      <div class="task-time" id="total_${task.id}">${hms(todayTotals[task.id]||0)}</div>
+      <button class="btn-toggle" onclick="toggleTask('${task.id}')">${activeTask===task.id?'Stop':'Start'}</button>
+      <button class="btn-del" onclick="askDelete('${task.id}')" title="Remove task">×</button>
+    `;
+    list.appendChild(row);
+
+    // accent bar color
+    row.style.setProperty('--lbar', assignColor(task.id));
+    if(activeTask===task.id){
+      const bar = row.querySelector('::before');
+    }
+    // inline style for ::before via CSS var hack — just set border-left
+    row.style.boxShadow = `inset 3px 0 0 0 ${activeTask===task.id ? assignColor(task.id) : 'var(--border2)'}`;
   });
+
   updateSummary();
 }
 
-function refreshCard(taskId){
-  // lightweight refresh of a single card's numbers
-  const card=document.getElementById('card_'+taskId);
-  if(!card) return;
-  const isAct=activeId===taskId;
-  const total=(todayTotals[taskId]||0)+(isAct?sessSecs:0);
-  const totEl=document.getElementById('tot_'+taskId);
-  if(totEl) totEl.textContent=hms(total);
-  const liveEl=document.getElementById('live_'+taskId);
-  if(liveEl) liveEl.textContent=hms(sessSecs);
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// delete modal
+function askDelete(id){
+  const task = todayTasks.find(t=>t.id===id);
+  if(!task) return;
+  deleteTarget = id;
+  document.getElementById('delModalMsg').textContent =
+    `Remove "${task.name}" from today's tasks? Time logs will be kept in history.`;
+  document.getElementById('delModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('delModal').classList.remove('open'); deleteTarget=null; }
+async function confirmDelete(){
+  if(!deleteTarget){ closeModal(); return; }
+  const id = deleteTarget;
+  closeModal();
+
+  if(activeTask===id) await stopTask();
+
+  // remove from Firestore
+  if(!id.startsWith('local_')){
+    try{ await db.collection('tasks').doc(id).delete(); } catch(e){}
+  }
+
+  todayTasks = todayTasks.filter(t=>t.id!==id);
+  delete todayTotals[id];
+  renderTaskList();
+  toast('Task removed','');
+  refreshCharts();
 }
 
-// ── DELETE TASK ───────────────────────────────
-function askDel(id){
-  const t=todayTasks.find(x=>x.id===id);
-  if(!t) return;
-  openConfirm('Remove Task',`Remove "${esc(t.name)}" from today? All time logs are kept in history.`,async()=>{
-    if(activeId===id) await stopTask();
-    if(!id.startsWith('loc_')) try{ await db.collection('tasks').doc(id).delete(); }catch(e){}
-    todayTasks=todayTasks.filter(x=>x.id!==id);
-    delete todayTotals[id];
-    renderTasks(); refreshCharts(); toast('Task removed');
-  });
-}
-
-// ── CONFIRM MODAL ─────────────────────────────
-function openConfirm(title,msg,cb){
-  document.getElementById('confirmTitle').textContent=title;
-  document.getElementById('confirmMsg').textContent=msg;
-  confirmCb=cb;
-  document.getElementById('confirmOverlay').classList.add('open');
-}
-function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('open'); confirmCb=null; }
-function doConfirm(){ const cb=confirmCb; closeConfirm(); if(cb) cb(); }
-
-// ── TIMER ─────────────────────────────────────
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
 function startTick(){
-  clearInterval(ticker);
-  ticker=setInterval(()=>{
-    if(!activeId||!activeStart) return;
-    sessSecs=(Date.now()-activeStart.getTime())/1000;
-    const lEl=document.getElementById('live_'+activeId);
-    if(lEl) lEl.textContent=hms(sessSecs);
-    refreshCard(activeId);
-    if(focusOn){
-      const ft=document.getElementById('foTimer');
-      if(ft) ft.textContent=hms(sessSecs);
-    }
+  clearInterval(tickInterval);
+  tickInterval = setInterval(()=>{
+    if(!activeTask||!activeStart) return;
+    sessionSecs = (Date.now()-activeStart.getTime())/1000;
+    const el = document.getElementById('live_'+activeTask);
+    if(el) el.textContent = hms(sessionSecs);
     updateSummary();
   },1000);
 }
 
 async function toggleTask(id){
-  if(activeId===id) await stopTask();
-  else{ if(activeId) await stopTask(); startTask(id); }
+  if(activeTask===id){ await stopTask(); }
+  else { if(activeTask) await stopTask(); startTask(id); }
 }
 
 function startTask(id){
-  const task=todayTasks.find(t=>t.id===id);
+  const task = todayTasks.find(t=>t.id===id);
   if(!task) return;
-  activeId=id; activeStart=new Date(); sessSecs=0;
-  renderTasks(); startTick();
-  if(focusOn){
-    document.getElementById('foName').textContent=task.name;
-    document.getElementById('foTimer').textContent='00:00:00';
-  }
-  toast('▶ '+task.name,'ok');
+  activeTask = id; activeStart = new Date(); sessionSecs = 0;
+  renderTaskList(); startTick();
+  toast(`▶ ${task.name}`,'ok');
 }
 
 async function stopTask(){
-  if(!activeId||!activeStart) return;
-  const endTime=new Date();
-  const startTime=new Date(activeStart);
-  const duration=Math.max(1,Math.floor((endTime-startTime)/1000));
-  const id=activeId;
-  const task=todayTasks.find(t=>t.id===id);
+  if(!activeTask||!activeStart) return;
+  const endTime = new Date();
+  const duration = Math.floor((endTime-activeStart)/1000);
+  const id = activeTask;
+  const task = todayTasks.find(t=>t.id===id);
 
-  // clear active state immediately
-  activeId=null; activeStart=null; sessSecs=0;
-  clearInterval(ticker);
+  activeTask=null; activeStart=null; sessionSecs=0;
+  clearInterval(tickInterval);
 
-  todayTotals[id]=(todayTotals[id]||0)+duration;
+  todayTotals[id] = (todayTotals[id]||0) + duration;
+  renderTaskList();
 
-  const entry={
-    taskId:   id,
-    taskName: task?task.name:id,
-    date:     tod(),
-    startTime:startTime.toISOString(),
-    endTime:  endTime.toISOString(),
+  const entry = {
+    taskId: id,
+    taskName: task ? task.name : id,
+    startTime: activeStart ? activeStart.toISOString() : endTime.toISOString(),
+    endTime: endTime.toISOString(),
     duration,
-    note:     ''
+    date: todayStr()
   };
+  // fix startTime
+  const st = new Date(endTime - duration*1000);
+  entry.startTime = st.toISOString();
 
-  setSync('busy','Saving…');
-  try{
-    const ref=await db.collection('timelogs').add(entry);
-    entry.id=ref.id;
-    setSync('ok','Synced ✓');
-    toast(`Logged ${hms(duration)} · ${entry.taskName}`,'ok');
-  }catch(e){
-    entry.id='loc_log_'+Date.now();
-    queueOffline('pendingLogs',entry);
-    setSync('err','Saved offline');
-    toast('Session saved offline','warn');
+  setSyncStatus('busy','Saving…');
+  try {
+    await db.collection('timelogs').add(entry);
+    setSyncStatus('ok','Synced');
+    toast(`Logged ${hms(duration)} for ${entry.taskName}`,'ok');
+  } catch(e){
+    const pl = JSON.parse(localStorage.getItem('pendingLogs')||'[]');
+    pl.push(entry); localStorage.setItem('pendingLogs', JSON.stringify(pl));
+    setSyncStatus('err','Saved offline');
+    toast('Saved offline','');
   }
 
   allLogs.push(entry);
-  renderTasks();
   refreshCharts();
-  if(focusOn){
-    document.getElementById('foName').textContent='No task running';
-    document.getElementById('foTimer').textContent='00:00:00';
-  }
-  // prompt note for sessions > 2 min
-  if(duration>120) setTimeout(()=>openNoteForLog(entry),500);
 }
 
-// ── NOTES ─────────────────────────────────────
-function openNoteForTask(taskId){
-  const logs=allLogs.filter(l=>l.taskId===taskId&&l.date===tod()).sort((a,b)=>b.startTime.localeCompare(a.startTime));
-  if(!logs.length){ toast('No sessions logged for this task yet','warn'); return; }
-  openNoteForLog(logs[0]);
-}
-function openNoteForLogId(logId){
-  const log=allLogs.find(l=>l.id===logId);
-  if(log) openNoteForLog(log); else toast('Session not found','warn');
-}
-function openNoteForLog(log){
-  noteLog=log;
-  document.getElementById('noteTitle').textContent='Session Note';
-  document.getElementById('noteSub').textContent=`${esc(log.taskName)} · ${ftm(log.startTime)} → ${ftm(log.endTime)} · ${hms(log.duration)}`;
-  document.getElementById('noteTA').value=log.note||'';
-  document.getElementById('noteOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('noteTA').focus(),80);
-}
-function closeNote(){ document.getElementById('noteOverlay').classList.remove('open'); noteLog=null; }
-async function saveNote(){
-  if(!noteLog) return;
-  const note=document.getElementById('noteTA').value.trim();
-  closeNote();
-  noteLog.note=note;
-  const idx=allLogs.findIndex(l=>l.id===noteLog.id);
-  if(idx>=0) allLogs[idx].note=note;
-  if(noteLog.id&&!noteLog.id.startsWith('loc_')){
-    try{ await db.collection('timelogs').doc(noteLog.id).update({note}); setSync('ok','Note saved'); }catch(e){}
-  }
-  toast('Note saved','ok');
-  // refresh history if visible
-  if(document.getElementById('page-history').classList.contains('active')) renderHistory();
-}
-
-// ── SUMMARY ───────────────────────────────────
+// ═══════════════════════════════════════════
+// SUMMARY
+// ═══════════════════════════════════════════
 function updateSummary(){
-  const body=document.getElementById('sumBody');
-  const grand=document.getElementById('grandTotal');
-  body.innerHTML='';
-  let total=0;
-  todayTasks.forEach(t=>{
-    const s=(todayTotals[t.id]||0)+(activeId===t.id?sessSecs:0);
-    total+=s;
-    const row=document.createElement('div'); row.className='sum-row';
-    row.innerHTML=`<span class="sum-name">${esc(t.name)}</span><span class="sum-time${s>0?' has':''}">${hms(s)}</span>`;
-    body.appendChild(row);
+  const grid = document.getElementById('summaryGrid');
+  const grand = document.getElementById('grandTotal');
+  grid.innerHTML = '';
+  let total = 0;
+
+  todayTasks.forEach(task=>{
+    let s = (todayTotals[task.id]||0) + (activeTask===task.id?sessionSecs:0);
+    total += s;
+    const row = document.createElement('div');
+    row.className = 'sum-row';
+    row.innerHTML = `<span class="sum-name">${escHtml(task.name)}</span><span class="sum-time${s>0?' has':''}">${hms(s)}</span>`;
+    grid.appendChild(row);
   });
-  grand.textContent=hms(total);
+
+  grand.textContent = hms(total);
 }
+
 function toggleSummary(){
-  sumOpen=!sumOpen;
-  document.getElementById('sumBody').style.display=sumOpen?'':'none';
+  const g = document.getElementById('summaryGrid');
+  g.style.display = g.style.display==='none' ? '' : 'none';
 }
 
-// ── FOCUS MODE ────────────────────────────────
-function toggleFocus(){
-  focusOn=!focusOn;
-  document.getElementById('focusBtn').classList.toggle('on',focusOn);
-  const ol=document.getElementById('focusOL');
-  if(focusOn){
-    ol.classList.add('on');
-    const task=activeId?todayTasks.find(t=>t.id===activeId):null;
-    document.getElementById('foName').textContent=task?task.name:'No task running';
-    document.getElementById('foTimer').textContent=hms(sessSecs);
-  } else ol.classList.remove('on');
-}
-function exitFocus(){ focusOn=false; document.getElementById('focusBtn').classList.remove('on'); document.getElementById('focusOL').classList.remove('on'); }
-
-// ── LOAD DATA ─────────────────────────────────
+// ═══════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════
 async function loadAll(){
-  setSync('busy','Loading…');
-  const t=tod();
-  try{
-    // today's tasks — single where field, no compound index needed
-    const tsnap=await db.collection('tasks').where('date','==',t).get();
-    todayTasks=[];
-    tsnap.forEach(doc=>{
-      const d=doc.data();
-      todayTasks.push({id:doc.id,...d});
-      getColor(doc.id);
-      nameColorCache[d.name]=getColor(doc.id);
-    });
-    todayTasks.sort((a,b)=>(a.order||0)-(b.order||0));
+  setSyncStatus('busy','Loading…');
+  const today = todayStr();
 
-    // logs for last 60 days — single where, sort client-side
-    const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-60);
-    const cutoffStr=dstr(cutoff);
-    const lsnap=await db.collection('timelogs').where('date','>=',cutoffStr).get();
-    allLogs=[];
+  try {
+    // Load today's tasks — NO orderBy to avoid needing a composite index
+    const tsnap = await db.collection('tasks').where('date','==',today).get();
+    todayTasks = [];
+    tsnap.forEach(doc=>{ const d=doc.data(); todayTasks.push({id:doc.id,...d}); assignColor(doc.id); });
+    todayTasks.sort((a,b)=>(a.order||0)-(b.order||0)); // sort client-side
+
+    // Load logs for last 35 days — single where clause, no orderBy (no index needed)
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-35);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    const lsnap = await db.collection('timelogs').where('date','>=',cutoffStr).get();
+    allLogs = [];
     lsnap.forEach(doc=>{ allLogs.push({id:doc.id,...doc.data()}); });
-    allLogs.sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
+    allLogs.sort((a,b)=>a.date.localeCompare(b.date)); // sort client-side
 
-    // today totals
-    todayTotals={};
-    allLogs.filter(l=>l.date===t).forEach(l=>{
-      todayTotals[l.taskId]=(todayTotals[l.taskId]||0)+(l.duration||0);
+    // Compute today totals
+    todayTotals = {};
+    allLogs.filter(l=>l.date===today).forEach(l=>{
+      todayTotals[l.taskId] = (todayTotals[l.taskId]||0) + (l.duration||0);
     });
 
-    renderTasks();
-    setSync('ok','Synced ✓');
+    renderTaskList();
+    setSyncStatus('ok','Synced ✓');
     await flushPending();
     refreshCharts();
-  }catch(e){
-    console.error('Firebase error:',e.code,e.message);
-    const msg=(e.message||'Error').slice(0,55);
-    setSync('err',e.code==='permission-denied'?'Permission denied — fix Firestore rules':msg);
-    if(e.code==='permission-denied'){
-      toast('⚠ Firestore rules blocking access. Set rules to allow read/write in Firebase Console.','err',7000);
-    } else {
-      toast('Firebase error: '+msg,'err');
-    }
-    renderTasks(); refreshCharts();
+  } catch(e){
+    // Show the real error so it can be diagnosed
+    const msg = (e.message||'Unknown error');
+    console.error('Firebase loadAll error:', e.code, e.message);
+    setSyncStatus('err', msg.length>44 ? msg.slice(0,42)+'…' : msg);
+    toast('Error: ' + msg.slice(0,70), 'err');
+    renderTaskList();
+    refreshCharts();
   }
 }
 
 async function flushPending(){
-  const pl=JSON.parse(localStorage.getItem('pendingLogs')||'[]');
-  const pt=JSON.parse(localStorage.getItem('pendingTasks')||'[]');
-  if(!pl.length&&!pt.length) return;
-  try{
-    const batch=db.batch();
+  try {
+    const pl = JSON.parse(localStorage.getItem('pendingLogs')||'[]');
+    const pt = JSON.parse(localStorage.getItem('pendingTasks')||'[]');
+    if(!pl.length && !pt.length) return;
+    const batch = db.batch();
     pl.forEach(e=>{ const r=db.collection('timelogs').doc(); batch.set(r,e); });
     pt.forEach(e=>{ const r=db.collection('tasks').doc(); batch.set(r,e); });
     await batch.commit();
     localStorage.removeItem('pendingLogs'); localStorage.removeItem('pendingTasks');
-    toast(`Flushed ${pl.length+pt.length} offline entries`,'ok');
-  }catch(e){}
+    toast(`Synced ${pl.length+pt.length} offline entries`,'ok');
+  } catch(e){}
 }
 
-// ── HISTORY ───────────────────────────────────
-function renderHistory(){
-  const scroll=document.getElementById('hScroll');
-  const dateVal=document.getElementById('hDateFilter').value;
-  const srch=(document.getElementById('hSearch').value||'').trim().toLowerCase();
+// ═══════════════════════════════════════════
+// CHART ENGINE  — 3 distinct visual modes
+//   DAY   → 24h bubble timeline
+//   WEEK  → multi-line chart (one line per task)
+//   MONTH → multi-line chart (one line per task)
+// ═══════════════════════════════════════════
+function setChartView(v, el){
+  chartView=v; chartOffset=0;
+  document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  refreshCharts();
+}
+function navPeriod(d){ chartOffset+=d; refreshCharts(); }
+function goToday(){ chartOffset=0; refreshCharts(); }
 
-  let logs=[...allLogs];
-  if(dateVal) logs=logs.filter(l=>l.date===dateVal);
-  if(srch) logs=logs.filter(l=>(l.taskName||'').toLowerCase().includes(srch)||(l.note||'').toLowerCase().includes(srch));
+function setBreakView(v,el){
+  breakView=v;
+  document.querySelectorAll('.btab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderBreakdown();
+}
 
-  if(!logs.length){
-    scroll.innerHTML='<div class="hempty">No sessions found. Try adjusting the filters.</div>';
+function refreshCharts(){
+  renderMainChart();
+  renderBreakdown();
+}
+
+// ── Period helpers ──────────────────────────
+function getPeriodRange(){
+  const now = new Date();
+  if(chartView==='day'){
+    const d = new Date(now); d.setDate(d.getDate()+chartOffset);
+    const s = dateStr(d);
+    return {start:s, end:s, dates:[s]};
+  }
+  if(chartView==='week'){
+    const d = new Date(now); d.setDate(d.getDate() + chartOffset*7);
+    const dow = d.getDay(); const mon = new Date(d); mon.setDate(d.getDate()-(dow===0?6:dow-1));
+    const dates=[];
+    for(let i=0;i<7;i++){ const x=new Date(mon); x.setDate(mon.getDate()+i); dates.push(dateStr(x)); }
+    return {start:dates[0], end:dates[6], dates};
+  }
+  const d = new Date(now.getFullYear(), now.getMonth()+chartOffset, 1);
+  const year=d.getFullYear(), month=d.getMonth();
+  const days = new Date(year,month+1,0).getDate();
+  const dates=[];
+  for(let i=1;i<=days;i++) dates.push(dateStr(new Date(year,month,i)));
+  return {start:dates[0], end:dates[dates.length-1], dates};
+}
+
+function getPeriodLabel(){
+  const {start,end} = getPeriodRange();
+  if(chartView==='day'){
+    const d = new Date(start+'T12:00:00');
+    return d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  }
+  if(chartView==='week'){
+    const s=new Date(start+'T12:00:00'), e=new Date(end+'T12:00:00');
+    return `${s.toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${e.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+  }
+  const d=new Date(start+'T12:00:00');
+  return d.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+}
+
+function getAggregated(){
+  const {dates} = getPeriodRange();
+  const byDate = {};
+  const taskSet = new Set();
+  dates.forEach(d=>{ byDate[d]={}; });
+  allLogs.filter(l=>dates.includes(l.date)).forEach(l=>{
+    const tn = l.taskName||l.taskId;
+    taskSet.add(tn);
+    byDate[l.date][tn] = (byDate[l.date][tn]||0) + (l.duration||0);
+  });
+  if(activeTask && activeStart){
+    const task = todayTasks.find(t=>t.id===activeTask);
+    if(task && dates.includes(todayStr())){
+      taskSet.add(task.name);
+      byDate[todayStr()][task.name] = (byDate[todayStr()][task.name]||0) + sessionSecs;
+    }
+  }
+  return {byDate, dates, tasks:[...taskSet]};
+}
+
+function colorForName(name){
+  const task = todayTasks.find(t=>t.name===name);
+  if(task) return assignColor(task.id);
+  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))&0xffff;
+  return PALETTE[h % PALETTE.length];
+}
+
+// ── Canvas setup ────────────────────────────
+function setupCanvas(id){
+  const canvas = document.getElementById(id);
+  if(!canvas) return null;
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio||1;
+  const W = Math.max(100, wrap.clientWidth);
+  const H = Math.max(80,  wrap.clientHeight);
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  return {ctx, W, H};
+}
+
+// ── Main chart dispatcher ───────────────────
+function renderMainChart(){
+  document.getElementById('periodLabel').textContent = getPeriodLabel();
+  if(chartView==='day')   renderDayBubble();
+  else                    renderLineChart();
+}
+
+// ══════════════════════════════════════════
+//  DAY VIEW — 24h bubble timeline
+//
+//  A large "day arc" ring shows 24 hours.
+//  Each task session = a coloured arc segment
+//  + a floating bubble with task name & duration.
+//  Untracked time = dark ring.
+// ══════════════════════════════════════════
+function renderDayBubble(){
+  const r = setupCanvas('mainChart');
+  if(!r) return;
+  const {ctx, W, H} = r;
+
+  const dateKey = getPeriodRange().dates[0];
+  const dayLogs = allLogs.filter(l=>l.date===dateKey);
+
+  // add live session
+  const liveLogs = [...dayLogs];
+  if(activeTask && activeStart && dateKey===todayStr()){
+    const task = todayTasks.find(t=>t.id===activeTask);
+    if(task) liveLogs.push({
+      taskId: activeTask, taskName: task.name,
+      startTime: activeStart.toISOString(),
+      endTime: new Date().toISOString(),
+      duration: sessionSecs, date: dateKey
+    });
+  }
+
+  // ── Layout constants ──
+  const cx = W*0.42, cy = H*0.5;
+  const outerR = Math.min(cx, cy) * 0.82;
+  const ringW   = outerR * 0.22;
+  const innerR  = outerR - ringW;
+  const TWO_PI  = Math.PI * 2;
+  const START   = -Math.PI/2; // 12 o'clock
+  const SECS_DAY = 86400;
+
+  // Draw dark background ring (full 24h)
+  ctx.beginPath();
+  ctx.arc(cx, cy, outerR - ringW/2, 0, TWO_PI);
+  ctx.strokeStyle = '#1c1c22';
+  ctx.lineWidth = ringW;
+  ctx.stroke();
+
+  // Draw subtle hour ticks
+  for(let h=0;h<24;h++){
+    const ang = START + (h/24)*TWO_PI;
+    const isMajor = h%6===0;
+    const r1 = outerR + (isMajor?4:2);
+    const r2 = outerR - ringW - (isMajor?4:2);
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(ang)*r1, cy+Math.sin(ang)*r1);
+    ctx.lineTo(cx+Math.cos(ang)*(outerR), cy+Math.sin(ang)*(outerR));
+    ctx.strokeStyle = isMajor ? '#3a3a48' : '#28282f';
+    ctx.lineWidth = isMajor ? 1.5 : 0.8;
+    ctx.stroke();
+  }
+
+  // Hour labels at 0,6,12,18
+  ctx.font = `10px 'JetBrains Mono'`;
+  ctx.fillStyle = '#4e4e62';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  [{h:0,lbl:'12am'},{h:6,lbl:'6am'},{h:12,lbl:'12pm'},{h:18,lbl:'6pm'}].forEach(({h,lbl})=>{
+    const ang = START + (h/24)*TWO_PI;
+    const lr = outerR + 14;
+    ctx.fillText(lbl, cx+Math.cos(ang)*lr, cy+Math.sin(ang)*lr);
+  });
+
+  // ── Draw task arcs ──
+  // Group sessions by task for bubble positioning
+  const taskArcs = {}; // taskName → [{startAng, endAng, secs}]
+
+  liveLogs.forEach(log=>{
+    if(!log.startTime || !log.duration) return;
+    const tn = log.taskName||log.taskId;
+    const color = colorForName(tn);
+
+    // convert startTime to seconds-since-midnight for this date
+    let st;
+    try{ st = new Date(log.startTime); } catch(e){ return; }
+    const dayStart = new Date(dateKey+'T00:00:00');
+    let secsSinceMidnight = (st - dayStart)/1000;
+    secsSinceMidnight = Math.max(0, Math.min(SECS_DAY-1, secsSinceMidnight));
+    const dur = Math.min(log.duration, SECS_DAY - secsSinceMidnight);
+    if(dur <= 0) return;
+
+    const angStart = START + (secsSinceMidnight/SECS_DAY)*TWO_PI;
+    const angEnd   = START + ((secsSinceMidnight+dur)/SECS_DAY)*TWO_PI;
+
+    // Draw arc segment
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR-ringW/2, angStart, angEnd);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = ringW;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // glow pass
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR-ringW/2, angStart, angEnd);
+    ctx.strokeStyle = color.replace(')', ',0.25)').replace('rgb','rgba').replace('#',
+      // hex to rgba glow helper
+      (c=>{ const v=parseInt(c.slice(1),16); return `rgba(${(v>>16)&255},${(v>>8)&255},${v&255},`; })(color));
+    ctx.lineWidth = ringW + 6;
+    ctx.stroke();
+
+    if(!taskArcs[tn]) taskArcs[tn]=[];
+    taskArcs[tn].push({angStart, angEnd, dur, color});
+  });
+
+  // ── Centre stats ──
+  const totalSecs = liveLogs.reduce((a,l)=>a+(l.duration||0),0);
+  const totalH = Math.floor(totalSecs/3600);
+  const totalM = Math.floor((totalSecs%3600)/60);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`bold 28px 'JetBrains Mono'`;
+  ctx.fillStyle = totalSecs>0?'#ededf5':'#33333c';
+  ctx.fillText(`${String(totalH).padStart(2,'0')}:${String(totalM).padStart(2,'0')}`, cx, cy-10);
+  ctx.font=`11px 'Syne'`;
+  ctx.fillStyle='#4e4e62';
+  ctx.fillText('tracked today', cx, cy+16);
+
+  const pct = Math.round((totalSecs/SECS_DAY)*100);
+  ctx.font=`10px 'JetBrains Mono'`;
+  ctx.fillStyle='#35356e';
+  ctx.fillText(`${pct}% of 24h`, cx, cy+32);
+
+  // ── Floating task bubbles (right side legend) ──
+  const taskList = Object.entries(taskArcs);
+  if(!taskList.length){
+    ctx.font=`12px 'Syne'`; ctx.fillStyle='#33333c'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('No sessions logged yet', cx, cy+60);
     return;
   }
 
-  // group: date → taskName → [sessions]
-  const byDate={};
-  logs.forEach(l=>{
-    if(!byDate[l.date]) byDate[l.date]={};
-    const tn=l.taskName||l.taskId;
-    if(!byDate[l.date][tn]) byDate[l.date][tn]=[];
-    byDate[l.date][tn].push(l);
-  });
+  // Aggregate per-task totals
+  const taskTotals = {};
+  liveLogs.forEach(l=>{ const tn=l.taskName||l.taskId; taskTotals[tn]=(taskTotals[tn]||0)+(l.duration||0); });
+  const sorted = Object.entries(taskTotals).sort((a,b)=>b[1]-a[1]);
 
-  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
-  scroll.innerHTML='';
+  const bubbleX = W*0.84;
+  const bubbleStartY = H*0.12;
+  const bubbleGap = Math.min(38, (H*0.8)/Math.max(sorted.length,1));
 
-  dates.forEach(date=>{
-    const block=document.createElement('div'); block.className='hday';
-    let dayTotal=0;
-    Object.values(byDate[date]).forEach(ss=>ss.forEach(s=>{ dayTotal+=(s.duration||0); }));
-    const dObj=new Date(date+'T12:00:00');
-    const dLbl=dObj.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-    block.innerHTML=`<div class="hday-hdr"><span class="hday-date">${dLbl}</span><span class="hday-total">${hms(dayTotal)} total</span></div>`;
+  ctx.textAlign='left';
+  sorted.forEach(([name,secs],i)=>{
+    const y = bubbleStartY + i*bubbleGap;
+    const color = colorForName(name);
+    const r2 = bubbleGap*0.34;
 
-    Object.entries(byDate[date]).forEach(([tName,sessions])=>{
-      const tTotal=sessions.reduce((a,s)=>a+(s.duration||0),0);
-      const col=colorByName(tName);
-      const grp=document.createElement('div'); grp.className='htask';
-      grp.innerHTML=`<div class="htask-hdr"><span class="htask-dot" style="background:${col}"></span><span class="htask-name">${esc(tName)}</span><span class="htask-tot">${hms(tTotal)}</span></div>`;
+    // bubble circle
+    ctx.beginPath(); ctx.arc(bubbleX-r2-4, y+r2, r2, 0, Math.PI*2);
+    ctx.fillStyle = color+'33';
+    ctx.fill();
+    ctx.beginPath(); ctx.arc(bubbleX-r2-4, y+r2, r2, 0, Math.PI*2);
+    ctx.strokeStyle = color; ctx.lineWidth=1.5; ctx.stroke();
 
-      sessions.sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||'')).forEach(s=>{
-        const sRow=document.createElement('div'); sRow.className='hsess';
-        sRow.innerHTML=`
-          <span class="hsess-range">${ftm(s.startTime)} – ${ftm(s.endTime)}</span>
-          <span class="hsess-dur">${hms(s.duration)}</span>
-          <span class="hsess-note">${esc(s.note||'')}</span>
-          <button class="btn-edit-note" onclick="openNoteForLogId('${s.id}')" title="Edit note">✎ note</button>`;
-        grp.appendChild(sRow);
-      });
-      block.appendChild(grp);
-    });
-    scroll.appendChild(block);
+    // task name
+    ctx.font=`bold 10px 'Syne'`; ctx.fillStyle='#ededf5'; ctx.textBaseline='top';
+    const label = name.length>14?name.slice(0,12)+'…':name;
+    ctx.fillText(label, bubbleX, y);
+    // duration
+    ctx.font=`9px 'JetBrains Mono'`; ctx.fillStyle=color; ctx.textBaseline='top';
+    ctx.fillText(hms(secs), bubbleX, y+13);
   });
 }
 
-// ── CHARTS ────────────────────────────────────
-function setPeriod(v,el){ cPeriod=v; cOffset=0; document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderChart(); }
-function navPeriod(d){ cOffset+=d; renderChart(); }
-function navToday(){ cOffset=0; renderChart(); }
-function setBd(v,el){ bdPeriod=v; document.querySelectorAll('.bdtab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderBreakdown(); }
-function refreshCharts(){ renderChart(); renderBreakdown(); }
+// ══════════════════════════════════════════
+//  WEEK / MONTH VIEW — multi-line chart
+//
+//  Y axis = hours tracked that day
+//  Each task = one coloured line with dots
+//  Smooth bezier curves between data points
+// ══════════════════════════════════════════
+function renderLineChart(){
+  const r = setupCanvas('mainChart');
+  if(!r) return;
+  const {ctx, W, H} = r;
 
-function getPDates(){
-  const now=new Date();
-  if(cPeriod==='day'){
-    const d=new Date(now); d.setDate(d.getDate()+cOffset); return [dstr(d)];
-  }
-  if(cPeriod==='week'){
-    const d=new Date(now); d.setDate(d.getDate()+cOffset*7);
-    const dow=d.getDay(); const mon=new Date(d); mon.setDate(d.getDate()-(dow===0?6:dow-1));
-    const arr=[]; for(let i=0;i<7;i++){ const x=new Date(mon); x.setDate(mon.getDate()+i); arr.push(dstr(x)); } return arr;
-  }
-  const d=new Date(now.getFullYear(),now.getMonth()+cOffset,1);
-  const days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-  const arr=[]; for(let i=1;i<=days;i++) arr.push(dstr(new Date(d.getFullYear(),d.getMonth(),i))); return arr;
-}
+  const {byDate, dates, tasks} = getAggregated();
 
-function getPLabel(){
-  const dates=getPDates();
-  if(!dates||!dates.length) return '';
-  if(cPeriod==='day'){
-    const d=new Date(dates[0]+'T12:00:00');
-    return d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  }
-  if(cPeriod==='week'){
-    const s=new Date(dates[0]+'T12:00:00'),e=new Date(dates[dates.length-1]+'T12:00:00');
-    return `${s.toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${e.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
-  }
-  return new Date(dates[0]+'T12:00:00').toLocaleDateString(undefined,{month:'long',year:'numeric'});
-}
-
-function getAgg(dates){
-  if(!dates||!dates.length) return {byDate:{},names:[]};
-  const byDate={}, nameSet=new Set();
-  dates.forEach(d=>{ byDate[d]={}; });
-  allLogs.filter(l=>dates.includes(l.date)).forEach(l=>{
-    const tn=l.taskName||l.taskId;
-    nameSet.add(tn);
-    byDate[l.date][tn]=(byDate[l.date][tn]||0)+(l.duration||0);
-  });
-  // live session
-  if(activeId&&activeStart){
-    const t=todayTasks.find(x=>x.id===activeId);
-    if(t&&dates.includes(tod())){
-      nameSet.add(t.name);
-      byDate[tod()][t.name]=(byDate[tod()][t.name]||0)+sessSecs;
-    }
-  }
-  return {byDate,names:[...nameSet]};
-}
-
-function renderChart(){
-  const lbl=document.getElementById('periodLbl');
-  if(lbl) lbl.textContent=getPLabel();
-  const canvas=document.getElementById('mainCanvas');
-  if(!canvas) return;
-  const wrap=canvas.parentElement;
-  const dpr=window.devicePixelRatio||1;
-  const W=Math.max(100,wrap.clientWidth||400);
-  const H=Math.max(80,wrap.clientHeight||200);
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-
-  const dates=getPDates()||[];
-  if(!dates.length) return;
-  const {byDate,names}=getAgg(dates);
-
-  const PL=52,PR=12,PT=14,PB=34;
+  const PL=52, PR=20, PT=20, PB=38;
   const CW=W-PL-PR, CH=H-PT-PB;
   if(CW<=0||CH<=0) return;
 
-  // max seconds
-  let maxS=0;
-  dates.forEach(d=>{ let t=0; Object.values(byDate[d]||{}).forEach(v=>{ t+=v; }); if(t>maxS) maxS=t; });
-  if(maxS<1800) maxS=3600;
-  maxS=Math.ceil(maxS/3600)*3600;
+  // max seconds across all days
+  let maxSecs=0;
+  dates.forEach(d=>{
+    Object.values(byDate[d]||{}).forEach(v=>{ if(v>maxSecs) maxSecs=v; });
+  });
+  if(maxSecs<3600) maxSecs=3600;
+  maxSecs = Math.ceil(maxSecs/3600)*3600;
 
-  // Y axis grid
-  ctx.font=`10px JetBrains Mono`; ctx.textBaseline='middle'; ctx.textAlign='right';
-  const yTk=4;
-  for(let i=0;i<=yTk;i++){
-    const s=(maxS/yTk)*i, y=PT+CH-(CH*i/yTk);
-    ctx.fillStyle='#3a3a48';
-    ctx.fillText((s/3600)%1===0?(s/3600)+'h':(s/3600).toFixed(1)+'h',PL-5,y);
-    ctx.strokeStyle=i===0?'#2e2e3a':'#1a1a1f';
+  // ── Y axis grid ──
+  ctx.font=`10px 'JetBrains Mono'`;
+  ctx.textBaseline='middle'; ctx.textAlign='right';
+  const yTicks=4;
+  for(let i=0;i<=yTicks;i++){
+    const s=(maxSecs/yTicks)*i;
+    const y=PT+CH-(CH*i/yTicks);
+    ctx.fillStyle='#4e4e62';
+    const hrs=s/3600;
+    ctx.fillText(hrs%1===0?hrs+'h':(hrs.toFixed(1))+'h', PL-6, y);
+    ctx.strokeStyle=i===0?'#33333c':'#1c1c22';
     ctx.lineWidth=i===0?1:.7;
     ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(PL+CW,y); ctx.stroke();
   }
 
-  if(!names.length){
-    ctx.fillStyle='#3a3a48'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.font="12px Syne";
-    ctx.fillText('No data yet — start tracking!',PL+CW/2,PT+CH/2);
+  // ── X axis labels ──
+  const step = dates.length>15 ? Math.ceil(dates.length/12) : 1;
+  dates.forEach((date,di)=>{
+    if(di%step!==0 && di!==dates.length-1) return;
+    const x=PL+(di/(dates.length-1||1))*CW;
+    ctx.fillStyle='#4e4e62'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.font=`10px 'JetBrains Mono'`;
+    const dObj=new Date(date+'T12:00:00');
+    const lbl = chartView==='week'
+      ? dObj.toLocaleDateString([],{weekday:'short'})
+      : dObj.getDate().toString();
+    ctx.fillText(lbl, x, PT+CH+6);
+  });
+
+  if(!tasks.length){
+    ctx.fillStyle='#4e4e62'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font="12px 'Syne'";
+    ctx.fillText('No data for this period', PL+CW/2, PT+CH/2);
     return;
   }
 
-  const gW=CW/dates.length;
-  const gap=cPeriod==='month'?0.5:Math.min(5,gW*.15);
-  const bW=Math.max(2,gW-gap*2);
-
-  dates.forEach((date,di)=>{
-    const cx=PL+di*gW+gW/2, x=cx-bW/2;
-    let stackY=PT+CH;
-    names.forEach(tn=>{
-      const s=(byDate[date]||{})[tn]||0;
-      if(!s) return;
-      const bh=Math.max(1,(s/maxS)*CH);
-      ctx.fillStyle=colorByName(tn);
-      ctx.beginPath();
-      rrect(ctx,x,stackY-bh,bW,bh,Math.min(3,bW/3,bh/2));
-      ctx.fill();
-      stackY-=bh;
+  // ── Draw lines ──
+  tasks.forEach(taskName=>{
+    const color = colorForName(taskName);
+    const points = dates.map((date,di)=>{
+      const secs = (byDate[date]||{})[taskName]||0;
+      const x = PL+(di/(dates.length-1||1))*CW;
+      const y = PT+CH - (secs/maxSecs)*CH;
+      return {x, y, secs};
     });
-    // x label
-    ctx.fillStyle='#3a3a48'; ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.font=`10px JetBrains Mono`;
-    const dObj=new Date(date+'T12:00:00');
-    const lbl=cPeriod==='week'?dObj.toLocaleDateString([],{weekday:'short'}):
-              cPeriod==='month'?dObj.getDate().toString():
-              dObj.toLocaleDateString([],{month:'short',day:'numeric'});
-    ctx.fillText(lbl,cx,PT+CH+5);
+
+    // Drop points with no data — but still draw them at baseline for continuity
+    // Only draw line through days with data
+    const hasData = points.some(p=>p.secs>0);
+    if(!hasData) return;
+
+    // ── Shadow / glow pass ──
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.12;
+    ctx.filter = 'blur(4px)';
+    drawSmoothLine(ctx, points);
+    ctx.restore();
+
+    // ── Main line ──
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.9;
+    ctx.lineJoin='round';
+    ctx.lineCap='round';
+    drawSmoothLine(ctx, points);
+    ctx.restore();
+
+    // ── Area fill under line ──
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, PT, 0, PT+CH);
+    grad.addColorStop(0, color+'40');
+    grad.addColorStop(1, color+'00');
+    ctx.fillStyle = grad;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, PT+CH);
+    points.forEach((p,i)=>{
+      if(i===0){ ctx.lineTo(p.x,p.y); return; }
+      const prev=points[i-1];
+      const cpx=(prev.x+p.x)/2;
+      ctx.bezierCurveTo(cpx,prev.y,cpx,p.y,p.x,p.y);
+    });
+    ctx.lineTo(points[points.length-1].x, PT+CH);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // ── Data point dots ──
+    points.forEach(p=>{
+      if(p.secs<=0) return;
+      // outer glow
+      ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
+      ctx.fillStyle=color+'44'; ctx.fill();
+      // dot
+      ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fillStyle=color; ctx.fill();
+      // white centre
+      ctx.beginPath(); ctx.arc(p.x,p.y,1,0,Math.PI*2);
+      ctx.fillStyle='#fff'; ctx.fill();
+    });
   });
 
-  // legend
-  if(names.length){
-    const n=Math.min(names.length,7);
-    let lx=PL+CW,ly=PT;
-    ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.font="10px Syne";
-    names.slice(0,n).forEach((tn,i)=>{
-      ctx.fillStyle=colorByName(tn); ctx.fillRect(lx-7,ly+i*13-2,7,5);
-      ctx.fillStyle='#9898b8';
-      ctx.fillText(tn.length>16?tn.slice(0,14)+'…':tn,lx-12,ly+i*13);
-    });
-  }
+  // ── Legend ──
+  drawLegend(ctx, tasks, W, PT);
 }
 
-function rrect(ctx,x,y,w,h,r){
-  if(h<=0||w<=0) return;
+// smooth bezier line helper
+function drawSmoothLine(ctx, points){
+  if(!points.length) return;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for(let i=1;i<points.length;i++){
+    const prev=points[i-1], cur=points[i];
+    const cpx=(prev.x+cur.x)/2;
+    ctx.bezierCurveTo(cpx,prev.y,cpx,cur.y,cur.x,cur.y);
+  }
+  ctx.stroke();
+}
+
+function drawLegend(ctx, tasks, W, topY){
+  if(!tasks.length) return;
+  const show = tasks.slice(0,7);
+  let lx=W-12, ly=topY+4;
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  ctx.font=`10px 'Syne'`;
+  show.forEach((t,i)=>{
+    const color=colorForName(t);
+    ctx.fillStyle=color;
+    // small coloured circle
+    ctx.beginPath(); ctx.arc(lx-4, ly+i*14, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#8e8ea8';
+    ctx.fillText(t.length>15?t.slice(0,13)+'…':t, lx-12, ly+i*14);
+  });
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(h<=0){return;}
   r=Math.min(r,h/2,w/2);
   ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
-  ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
   ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.lineTo(x,y+r);
-  ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
-function getBdDates(){
-  const now=new Date();
-  if(bdPeriod==='day') return [tod()];
-  if(bdPeriod==='week'){
-    const dow=now.getDay(),mon=new Date(now);
-    mon.setDate(now.getDate()-(dow===0?6:dow-1));
-    const arr=[]; for(let i=0;i<7;i++){ const x=new Date(mon); x.setDate(mon.getDate()+i); arr.push(dstr(x)); } return arr;
+// ── BREAKDOWN BARS ──
+function getBreakdownRange(){
+  const now = new Date();
+  if(breakView==='day') return [todayStr()];
+  if(breakView==='week'){
+    const dow=now.getDay(); const mon=new Date(now); mon.setDate(now.getDate()-(dow===0?6:dow-1));
+    const d=[]; for(let i=0;i<7;i++){const x=new Date(mon);x.setDate(mon.getDate()+i);d.push(dateStr(x));}
+    return d;
   }
-  const yr=now.getFullYear(),mo=now.getMonth();
-  const days=new Date(yr,mo+1,0).getDate();
-  const arr=[]; for(let i=1;i<=days;i++) arr.push(dstr(new Date(yr,mo,i))); return arr;
+  const d=[]; const year=now.getFullYear(),month=now.getMonth();
+  const days=new Date(year,month+1,0).getDate();
+  for(let i=1;i<=days;i++) d.push(dateStr(new Date(year,month,i)));
+  return d;
 }
 
 function renderBreakdown(){
-  const dates=getBdDates();
-  const totals={};
+  const dates = getBreakdownRange();
+  const totals = {};
+
   allLogs.filter(l=>dates.includes(l.date)).forEach(l=>{
-    const tn=l.taskName||l.taskId;
-    totals[tn]=(totals[tn]||0)+(l.duration||0);
+    const tn = l.taskName||l.taskId;
+    totals[tn] = (totals[tn]||0) + (l.duration||0);
   });
-  if(activeId&&activeStart&&dates.includes(tod())){
-    const t=todayTasks.find(x=>x.id===activeId);
-    if(t) totals[t.name]=(totals[t.name]||0)+sessSecs;
+  if(activeTask && activeStart && dates.includes(todayStr())){
+    const task = todayTasks.find(t=>t.id===activeTask);
+    if(task){ totals[task.name]=(totals[task.name]||0)+sessionSecs; }
   }
-  const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
-  const maxS=(sorted[0]?.[1])||1;
-  const cont=document.getElementById('bdBars');
-  cont.innerHTML='';
+
+  const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const maxSecs = sorted[0]?.[1]||1;
+  const container = document.getElementById('breakdownBars');
+  container.innerHTML='';
+
   if(!sorted.length){
-    cont.innerHTML='<div style="color:var(--t3);font-size:10px;padding:6px 0">No data for this period</div>';
+    container.innerHTML='<div style="color:var(--text3);font-size:11px;padding:8px 0">No data for this period</div>';
     return;
   }
+
   sorted.forEach(([name,secs],i)=>{
-    const pct=Math.round((secs/maxS)*100), col=colorByName(name);
-    const row=document.createElement('div'); row.className='bd-row';
+    const pct = Math.round((secs/maxSecs)*100);
+    const color = colorForName(name);
+    const row = document.createElement('div');
+    row.className='bbar-row';
     row.innerHTML=`
-      <span class="bd-name" title="${esc(name)}">${esc(name)}</span>
-      <div class="bd-track"><div class="bd-fill" style="width:${pct}%;background:${col}"></div></div>
-      <span class="bd-time${i===0?' top':''}">${hms(secs)}</span>`;
-    cont.appendChild(row);
+      <span class="bbar-name" title="${escHtml(name)}">${escHtml(name)}</span>
+      <div class="bbar-track"><div class="bbar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="bbar-time${i===0?' top':''}">${hms(secs)}</span>
+    `;
+    container.appendChild(row);
   });
 }
 
-// ── RESIZE ────────────────────────────────────
-let _rt; window.addEventListener('resize',()=>{ clearTimeout(_rt); _rt=setTimeout(renderChart,80); });
 
-// ── TAB CLOSE ─────────────────────────────────
+// ═══════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════
+let resizeTimer;
+window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(refreshCharts,80); });
+
+// ═══════════════════════════════════════════
+// TAB CLOSE
+// ═══════════════════════════════════════════
 window.addEventListener('beforeunload',()=>{
-  if(!activeId||!activeStart) return;
-  const endTime=new Date(), duration=Math.max(1,Math.floor((endTime-activeStart)/1000));
-  const task=todayTasks.find(t=>t.id===activeId);
-  const entry={taskId:activeId,taskName:task?task.name:activeId,date:tod(),
-    startTime:activeStart.toISOString(),endTime:endTime.toISOString(),duration,note:''};
-  queueOffline('pendingLogs',entry);
-  try{ db.collection('timelogs').add(entry); }catch(e){}
+  if(activeTask&&activeStart){
+    const endTime=new Date(), duration=Math.floor((endTime-activeStart)/1000);
+    const task=todayTasks.find(t=>t.id===activeTask);
+    const entry={taskId:activeTask,taskName:task?task.name:activeTask,
+      startTime:activeStart.toISOString(),endTime:endTime.toISOString(),duration,date:todayStr()};
+    const pl=JSON.parse(localStorage.getItem('pendingLogs')||'[]');
+    pl.push(entry); localStorage.setItem('pendingLogs',JSON.stringify(pl));
+    try{ db.collection('timelogs').add(entry); }catch(e){}
+  }
 });
 
-// ── MIDNIGHT ROLLOVER ─────────────────────────
+// ═══════════════════════════════════════════
+// MIDNIGHT REFRESH
+// ═══════════════════════════════════════════
 function scheduleMidnight(){
-  const now=new Date(),mid=new Date(now); mid.setHours(24,0,0,0);
+  const now=new Date(), midnight=new Date(now); midnight.setHours(24,0,0,0);
   setTimeout(async()=>{
-    if(activeId) await stopTask();
+    if(activeTask) await stopTask();
     todayTasks=[]; todayTotals={};
-    updateDate(); renderTasks(); refreshCharts();
-    toast('New day — add your tasks!','ok',4000);
+    updateDateDisplay(); renderTaskList(); refreshCharts();
     scheduleMidnight();
-  },mid-now);
+  }, midnight-now);
 }
 
-// ── INIT ──────────────────────────────────────
-(async()=>{
-  // quick write ping to detect permission issues
-  try{
-    await db.collection('_ping').doc('heartbeat').set({ts:new Date().toISOString()});
-    setSync('ok','Firebase ready');
-  }catch(e){
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+
+// Quick connectivity ping — write a heartbeat doc to verify rules allow writes
+async function pingFirebase(){
+  try {
+    await db.collection('_ping').doc('test').set({ts: new Date().toISOString()});
+    setSyncStatus('ok','Firebase connected');
+    console.log('Firebase write test: OK');
+  } catch(e){
+    console.error('Firebase write test FAILED:', e.code, e.message);
+    // Common: permission-denied means Firestore rules block writes
     if(e.code==='permission-denied'){
-      setSync('err','Permission denied');
-      toast('⚠ Firestore rules are blocking writes. Go to Firebase Console → Firestore → Rules and allow read/write.','err',9000);
+      setSyncStatus('err','Rules blocked — check Firestore rules');
+      toast('Firestore rules are blocking access. Set rules to allow read/write.','err');
+    } else {
+      setSyncStatus('err', e.message.slice(0,50));
     }
   }
-  await loadAll();
-  scheduleMidnight();
-  setTimeout(refreshCharts,300);
-})();
+}
+
+pingFirebase();
+loadAll();
+scheduleMidnight();
+// Initial chart render after layout
+setTimeout(refreshCharts, 200);
 </script>
 </body>
 </html>
